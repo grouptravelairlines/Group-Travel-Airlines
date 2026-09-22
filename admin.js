@@ -234,15 +234,29 @@ async function handlePostDelete(){
 
 async function handleHomepageSave(e){
   e.preventDefault();
-  const steps=[0,1,2,3].map(i=>({title:$(`stepTitle${i}`).value.trim(),text:$(`stepText${i}`).value.trim()}));
-  const features=[0,1,2].map(i=>({title:$(`featureTitle${i}`).value.trim(),text:$(`featureText${i}`).value.trim(),image:$(`featureImage${i}`).value.trim()}));
+  const steps=[0,1,2,3].map(i=>({
+  title:$(`stepTitle${i}`).value.trim(),
+  text:$(`stepText${i}`).value.trim()
+}));
   const data={
     eyebrow:$("homeEyebrow").value.trim(),
     title1:$("homeTitle1").value.trim(),
     title2:$("homeTitle2").value.trim(),
     heroText:$("homeHeroText").value.trim(),
     heroNote:$("homeHeroNote").value.trim(),
-    steps,features,updatedAt:serverTimestamp()
+
+contentEyebrow:
+  $("homeContentEyebrow").value.trim(),
+
+contentTitle:
+  $("homeContentTitle").value.trim(),
+
+contentText:
+  $("homeContentText").value.trim(),
+
+steps,
+
+updatedAt:serverTimestamp()
   };
   try{await setDoc(doc(db,"siteSettings","home"),data,{merge:true});setMessage("homepageMessage","Homepage saved.",true);}
   catch(err){setMessage("homepageMessage",err.message||"Save failed.");}
