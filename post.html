@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Group Travel Airlines article">
+<title>Blog Post | Group Travel Airlines</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.post-wrap{padding:70px 0}
+.post-shell{max-width:880px;margin:auto}
+.post-kicker{color:var(--blue);font-weight:900;letter-spacing:.08em;font-size:12px}
+.post-shell h1{font-size:clamp(40px,6vw,64px);line-height:1.02;color:var(--navy);letter-spacing:-.04em;margin:10px 0 16px}
+.post-meta{color:var(--muted);font-size:14px;margin-bottom:30px}
+.post-hero{width:100%;max-height:480px;object-fit:cover;border-radius:18px;margin:0 0 32px}
+.post-content{font-size:17px;color:#3e4b60}
+.post-content p{margin:0 0 18px}
+.post-content h2{margin-top:32px}
+.empty-post{padding:50px 0;text-align:center}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="container topbar-inner">
+  <span>Practical travel information for groups, families, teams and business travelers.</span>
+  <div class="contact-line"><a href="mailto:info@grouptravelairlines.com">info@grouptravelairlines.com</a><span>|</span><a href="tel:18889287796">1-888-928-7796</a></div>
+</div></div>
+<header class="site-header"><div class="container nav-inner">
+  <a class="brand" href="index.html"><img src="assets/logo.png" alt="Group Travel Airlines"></a>
+  <nav class="main-nav"><a href="index.html">Home</a><a class="active" href="blog.html">Blog</a></nav>
+</div></header>
+<main class="post-wrap"><div class="container post-shell" id="postApp">
+  <div class="empty-post">Loading article…</div>
+</div></main>
+<footer class="site-footer"><div class="container footer-grid">
+  <div class="footer-brand"><img src="assets/logo.png" alt="Group Travel Airlines"><p>Practical travel information for groups, families, teams and business travelers.</p></div>
+  <div><h3>Quick Links</h3><a href="index.html">Home</a><a href="blog.html">Blog</a></div>
+  <div><h3>Contact Us</h3><a href="tel:18889287796">1-888-928-7796</a><a href="mailto:info@grouptravelairlines.com">info@grouptravelairlines.com</a></div>
+</div><div class="container footer-bottom"><span>© 2026 Group Travel Airlines. All rights reserved.</span><div><a href="#">Privacy</a><a href="#">Terms</a><a href="mailto:info@grouptravelairlines.com">Contact</a></div></div></footer>
+
+<script type="module">
+import { getPostBySlug } from "./firebase-public.js";
+const app=document.querySelector("#postApp");
+const slug=new URLSearchParams(location.search).get("slug");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+try{
+  const post=await getPostBySlug(slug||"");
+  if(!post){ app.innerHTML='<div class="empty-post"><h1>Article not found</h1><p>Return to the <a href="blog.html">Blog</a>.</p></div>'; }
+  else {
+    const content=esc(post.content||"").split(/\n{2,}/).map(p=>`<p>${p.replace(/\n/g,"<br>")}</p>`).join("");
+    app.innerHTML=`
+      <p class="post-kicker">${esc(post.category||"TRAVEL")}</p>
+      <h1>${esc(post.title)}</h1>
+      <div class="post-meta">Group Travel Airlines</div>
+      ${post.imageUrl?`<img class="post-hero" src="${esc(post.imageUrl)}" alt="">`:""}
+      <div class="post-content">${content}</div>
+    `;
+    document.title=post.seoTitle || post.title;
+    const md=document.querySelector('meta[name="description"]');
+    md?.setAttribute("content",post.metaDescription||post.excerpt||"Group Travel Airlines");
+  }
+}catch(err){
+  app.innerHTML='<div class="empty-post"><h1>Article unavailable</h1><p>Please try again later.</p></div>';
+}
+</script>
+</body>
+</html>

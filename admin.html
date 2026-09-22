@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Group Travel Airlines — Admin</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div id="setupNotice" class="notice hidden"></div>
+
+  <section id="loginView" class="auth-shell">
+    <div class="auth-card">
+      <img src="assets/logo.png" alt="Group Travel Airlines" class="auth-logo">
+      <p class="eyebrow">CONTENT MANAGEMENT</p>
+      <h1>Admin Login</h1>
+      <p class="muted">Sign in to manage the homepage and publish Blog content.</p>
+
+      <form id="loginForm">
+        <label>Email
+          <input id="loginEmail" type="email" autocomplete="username" required>
+        </label>
+        <label>Password
+          <input id="loginPassword" type="password" autocomplete="current-password" required>
+        </label>
+        <button class="primary" type="submit">Sign in</button>
+      </form>
+
+      <button id="resetPassword" class="link-button" type="button">Forgot password?</button>
+      <p id="loginMessage" class="message"></p>
+    </div>
+  </section>
+
+  <section id="adminView" class="admin-shell hidden">
+    <header class="admin-topbar">
+      <div>
+        <strong>Group Travel Airlines</strong>
+        <span class="admin-badge">ADMIN</span>
+      </div>
+      <div class="top-actions">
+        <a href="index.html" target="_blank">View site ↗</a>
+        <span id="currentEmail"></span>
+        <button id="logoutButton" class="ghost">Logout</button>
+      </div>
+    </header>
+
+    <div class="admin-layout">
+      <aside class="sidebar">
+        <button class="side-link active" data-panel="dashboardPanel">Dashboard</button>
+        <button class="side-link" data-panel="postsPanel">Blog Posts</button>
+        <button class="side-link" data-panel="homepagePanel">Homepage</button>
+        <button class="side-link" data-panel="settingsPanel">Site Settings</button>
+      </aside>
+
+      <main class="admin-main">
+        <section id="dashboardPanel" class="panel active">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">OVERVIEW</p>
+              <h2>Content Dashboard</h2>
+            </div>
+            <button class="primary" data-open-posts>+ New Blog Post</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat"><span>Total Posts</span><strong id="statTotal">0</strong></div>
+            <div class="stat"><span>Published</span><strong id="statPublished">0</strong></div>
+            <div class="stat"><span>Drafts</span><strong id="statDrafts">0</strong></div>
+          </div>
+          <div class="card">
+            <div class="card-heading"><h3>Recent Posts</h3></div>
+            <div id="recentPosts"></div>
+          </div>
+        </section>
+
+        <section id="postsPanel" class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">CONTENT</p>
+              <h2>Blog Posts</h2>
+            </div>
+            <button id="newPostButton" class="primary">+ New Post</button>
+          </div>
+
+          <div class="editor-layout">
+            <div class="card">
+              <div id="postList"></div>
+            </div>
+
+            <div class="card editor-card">
+              <div class="editor-title-row">
+                <h3 id="postEditorTitle">New Blog Post</h3>
+                <span id="postStatusBadge" class="status draft">Draft</span>
+              </div>
+
+              <form id="postForm">
+                <input id="postId" type="hidden">
+
+                <label>Title
+                  <input id="postTitle" type="text" required>
+                </label>
+
+                <label>Slug
+                  <input id="postSlug" type="text" placeholder="auto-generated-from-title">
+                </label>
+
+                <div class="two-col">
+                  <label>Category
+                    <input id="postCategory" type="text" value="Travel Guide">
+                  </label>
+                  <label>Featured Image URL
+                    <input id="postImageUrl" type="url" placeholder="https://...">
+                  </label>
+                </div>
+
+                <label>Excerpt
+                  <textarea id="postExcerpt" rows="3" required></textarea>
+                </label>
+
+                <label>Article Content
+                  <textarea id="postContent" rows="14" placeholder="Write the article here..."></textarea>
+                </label>
+
+                <div class="two-col">
+                  <label>SEO Title
+                    <input id="postSeoTitle" type="text">
+                  </label>
+                  <label>Meta Description
+                    <input id="postMetaDescription" type="text">
+                  </label>
+                </div>
+
+                <label class="checkbox-line">
+                  <input id="postPublished" type="checkbox">
+                  Publish this post
+                </label>
+
+                <div class="form-actions">
+                  <button class="primary" type="submit">Save Post</button>
+                  <button id="deletePostButton" class="danger hidden" type="button">Delete Post</button>
+                </div>
+                <p id="postMessage" class="message"></p>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section id="homepagePanel" class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">EDIT CONTENT</p>
+              <h2>Homepage</h2>
+            </div>
+          </div>
+
+          <form id="homepageForm" class="card form-card">
+            <h3>Hero</h3>
+            <div class="two-col">
+              <label>Eyebrow
+                <input id="homeEyebrow" type="text">
+              </label>
+              <label>Hero Note
+                <input id="homeHeroNote" type="text">
+              </label>
+            </div>
+
+            <div class="two-col">
+              <label>Headline — line 1
+                <input id="homeTitle1" type="text">
+              </label>
+              <label>Headline — line 2
+                <input id="homeTitle2" type="text">
+              </label>
+            </div>
+
+            <label>Hero Description
+              <textarea id="homeHeroText" rows="3"></textarea>
+            </label>
+
+            <h3>Booking Steps</h3>
+            <div id="stepsEditor"></div>
+
+            <h3>Feature Cards</h3>
+            <div id="featureEditor"></div>
+
+            <button class="primary" type="submit">Save Homepage</button>
+            <p id="homepageMessage" class="message"></p>
+          </form>
+        </section>
+
+        <section id="settingsPanel" class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">GLOBAL SETTINGS</p>
+              <h2>Site Settings</h2>
+            </div>
+          </div>
+
+          <form id="settingsForm" class="card form-card">
+            <div class="two-col">
+              <label>Phone
+                <input id="settingPhone" type="text">
+              </label>
+              <label>Email
+                <input id="settingEmail" type="email">
+              </label>
+            </div>
+
+            <label>Request A Quote URL
+              <input id="settingQuoteUrl" type="url">
+            </label>
+
+            <label>Top Bar Text
+              <input id="settingTopBarText" type="text">
+            </label>
+
+            <label>Footer Description
+              <textarea id="settingFooterText" rows="3"></textarea>
+            </label>
+
+            <button class="primary" type="submit">Save Settings</button>
+            <p id="settingsMessage" class="message"></p>
+          </form>
+
+          <div class="card help-card">
+            <h3>Media</h3>
+            <p>For the current GitHub Pages setup, keep the approved images in <code>assets/</code>. The Blog editor accepts an image URL for each post. Cloud Storage upload can be added later if you enable Firebase Storage.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
