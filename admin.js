@@ -1,423 +1,1991 @@
 import {
-  isConfigured, auth, db, onAuthStateChanged,
-  signInWithEmailAndPassword, signOut, sendPasswordResetEmail,
-  collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp
+  isConfigured,
+  auth,
+  db,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  addDoc,
+  updateDoc,
+  serverTimestamp
 } from "./firebase-app.js";
 
+
+/* =========================================================
+   BASIC HELPERS
+========================================================= */
+
 const $ = (id) => document.getElementById(id);
+
 const loginView = $("loginView");
 const adminView = $("adminView");
 const setupNotice = $("setupNotice");
 
-const defaultHome = {
-  eyebrow: "GROUP TRAVEL MADE EASY",
-  title1: "Travel together.",
-  title2: "Plan smarter.",
-  heroText: "Your resource for group flight information, travel planning and practical tips for a smooth and successful journey.",
-  heroNote: "Get started on our main website.",
-  contentEyebrow: "WHAT YOU'LL FIND",
 
-contentTitle:
-  "Useful travel information, without the clutter.",
-
-contentText:
-  "One clear content hub for group travel planning, tips and answers to common questions.",
-  steps: [
-    {title:"REQUEST A GROUP QUOTE", text:"Submit the group travel details on our website or contact us directly at 1-888-928-7796."},
-    {title:"EXPERT WILL REVIEW THE QUOTE", text:"Our travel expert team will evaluate your details and look for suitable options to accommodate your request."},
-    {title:"WE WILL SEND THE BEST OFFER", text:"Once we review your requirement, we will provide the best available options for your group within your budget."},
-    {title:"FINALIZE THE BOOKING", text:"You get to accept one of the available offers and follow the instructions. Later, the e-ticket will be delivered to your email address."}
-  ],
-  features: [
-    {title:"Group Travel Information", text:"Learn about group booking processes, airline requirements and important planning steps.", image:"assets/group-travel.jpg"},
-    {title:"Travel Planning", text:"Practical ideas for organizing people, dates, routes and important trip details.", image:"assets/travel-planning.jpg"},
-    {title:"Helpful Articles", text:"Easy-to-read travel content designed for people researching their next group journey.", image:"assets/travel-articles.jpg"}
-  ]
-};
-
-const defaultSettings = {
-  phone: "1-888-928-7796",
-  email: "info@grouptravelairlines.com",
-  quoteUrl: "https://www.grouptravelairlines.com/",
-  topBarText: "Practical travel information for groups, families, teams and business travelers.",
-  footerText: "Practical travel information for groups, families, teams and business travelers."
-};
-
-let posts = [];
-let currentPostId = null;
-
-function setMessage(id, text, good=false){
-  const el = $(id); if(!el) return;
-  el.textContent = text;
-  el.style.color = good ? "#1f8f58" : "";
-}
-
-function slugify(text){
-  return (text||"").toLowerCase().trim()
-    .replace(/[^a-z0-9\s-]/g,"")
-    .replace(/\s+/g,"-")
-    .replace(/-+/g,"-");
-}
-
-function formatDate(value){
-  if(!value) return "";
-  if(typeof value.toDate === "function") return value.toDate().toLocaleDateString();
-  const d = new Date(value); return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString();
-}
-
-async function isAdminUser(user){
-  if(!user || !db) return false;
-  const ref = doc(db, "admins", user.uid);
-  const snap = await getDoc(ref);
-  return snap.exists();
-}
-
-function openPanel(id){
-  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
-  document.querySelectorAll(".side-link").forEach(b=>b.classList.remove("active"));
-  $(id)?.classList.add("active");
-  document.querySelector(`.side-link[data-panel="${id}"]`)?.classList.add("active");
-}
-
-async function loadPosts(){
-  const snap = await getDocs(collection(db,"posts"));
-  posts = snap.docs.map(d=>({id:d.id,...d.data()}));
-  posts.sort((a,b)=>{
-    const aa=a.updatedAt?.seconds || a.createdAt?.seconds || 0;
-    const bb=b.updatedAt?.seconds || b.createdAt?.seconds || 0;
-    return bb-aa;
-  });
-  renderPostList();
-  renderStats();
-}
-
-function renderStats(){
-  const published=posts.filter(p=>p.published).length;
-  $("statTotal").textContent=posts.length;
-  $("statPublished").textContent=published;
-  $("statDrafts").textContent=posts.length-published;
-  $("recentPosts").innerHTML = posts.slice(0,5).map(p=>`
-    <div class="post-row" data-id="${p.id}">
-      <strong>${escapeHtml(p.title||"Untitled")}</strong>
-      <span>${p.published ? "Published" : "Draft"}${p.updatedAt ? " · "+formatDate(p.updatedAt) : ""}</span>
-    </div>
-  `).join("") || '<p class="muted">No posts yet.</p>';
-  document.querySelectorAll("#recentPosts .post-row").forEach(r=>r.addEventListener("click",()=>{openPanel("postsPanel");loadPostIntoEditor(r.dataset.id)}));
-}
-
-function renderPostList(){
-  $("postList").innerHTML = posts.map(p=>`
-    <div class="post-row" data-id="${p.id}">
-      <strong>${escapeHtml(p.title||"Untitled")}</strong>
-      <span>${escapeHtml(p.category||"Travel")} · ${p.published ? "Published" : "Draft"}</span>
-    </div>
-  `).join("") || '<p class="muted">No posts yet. Click “New Post”.</p>';
-  document.querySelectorAll("#postList .post-row").forEach(r=>r.addEventListener("click",()=>loadPostIntoEditor(r.dataset.id)));
-}
-
-function renderHomepageEditor(data){
-  const h={...defaultHome,...data};
-  $("homeEyebrow").value=h.eyebrow||"";
-  $("homeTitle1").value=h.title1||"";
-  $("homeTitle2").value=h.title2||"";
-  $("homeHeroText").value=h.heroText||"";
-  $("homeHeroNote").value=h.heroNote||"";
-  $("homeContentEyebrow").value =
-  h.contentEyebrow ||
-  "WHAT YOU'LL FIND";
-
-$("homeContentTitle").value =
-  h.contentTitle ||
-  "Useful travel information, without the clutter.";
-
-$("homeContentText").value =
-  h.contentText ||
-  "One clear content hub for group travel planning, tips and answers to common questions.";
-  $("stepsEditor").innerHTML=(h.steps||defaultHome.steps).map((s,i)=>`
-    <div class="card" style="margin-bottom:12px;padding:16px">
-      <label>Step ${i+1} title<input id="stepTitle${i}" value="${escapeAttr(s.title||"")}"></label>
-      <label>Step ${i+1} text<textarea id="stepText${i}" rows="3">${escapeHtml(s.text||"")}</textarea></label>
-    </div>
-  `).join("");
-}
-
-async function loadHomepage(){
-  const snap=await getDoc(doc(db,"siteSettings","home"));
-  renderHomepageEditor(snap.exists()?snap.data():defaultHome);
-}
-
-async function loadSettings(){
-  const snap=await getDoc(doc(db,"siteSettings","global"));
-  const s=snap.exists()?snap.data():defaultSettings;
-  $("settingPhone").value=s.phone||"";
-  $("settingEmail").value=s.email||"";
-  $("settingQuoteUrl").value=s.quoteUrl||"";
-  $("settingTopBarText").value=s.topBarText||"";
-  $("settingFooterText").value=s.footerText||"";
-}
-
-function newPost(){
-  currentPostId=null;
-  $("postForm").reset();
-  updatePostImagePreview();
-  $("postCategory").value="Travel Guide";
-  $("postPublished").checked=false;
-  $("postEditorTitle").textContent="New Blog Post";
-  $("postStatusBadge").textContent="Draft";
-  $("postStatusBadge").className="status draft";
-  $("deletePostButton").classList.add("hidden");
-  setMessage("postMessage","");
-}
-
-function loadPostIntoEditor(id){
-  const p=posts.find(x=>x.id===id); if(!p) return;
-  currentPostId=id;
-  $("postTitle").value=p.title||"";
-  $("postSlug").value=p.slug||"";
-  $("postCategory").value=p.category||"Travel Guide";
-  $("postImageUrl").value=p.imageUrl||"";
-  updatePostImagePreview();
-  $("postExcerpt").value=p.excerpt||"";
-  $("postContent").value=p.content||"";
-  $("postSeoTitle").value=p.seoTitle||"";
-  $("postMetaDescription").value=p.metaDescription||"";
-  $("postPublished").checked=!!p.published;
-  $("postEditorTitle").textContent="Edit Blog Post";
-  $("postStatusBadge").textContent=p.published?"Published":"Draft";
-  $("postStatusBadge").className="status "+(p.published?"published":"draft");
-  $("deletePostButton").classList.remove("hidden");
-  setMessage("postMessage","");
-}
-
-async function handlePostSave(e){
-  e.preventDefault();
-  const title=$("postTitle").value.trim();
-  const slug=($("postSlug").value.trim()||slugify(title));
-  if(!title) return;
-  const published=$("postPublished").checked;
-  const payload={
-    title,slug,
-    category:$("postCategory").value.trim(),
-    imageUrl:$("postImageUrl").value.trim(),
-    excerpt:$("postExcerpt").value.trim(),
-    content:$("postContent").value,
-    seoTitle:$("postSeoTitle").value.trim()||title,
-    metaDescription:$("postMetaDescription").value.trim()||$("postExcerpt").value.trim(),
-    published,
-    updatedAt:serverTimestamp()
-  };
-  try{
-    if(currentPostId){
-      if(published && !posts.find(p=>p.id===currentPostId)?.published) payload.publishedAt=serverTimestamp();
-      await updateDoc(doc(db,"posts",currentPostId),payload);
-    }else{
-      payload.createdAt=serverTimestamp();
-      if(published) payload.publishedAt=serverTimestamp();
-      const ref=await addDoc(collection(db,"posts"),payload);
-      currentPostId=ref.id;
-    }
-    setMessage("postMessage","Post saved.",true);
-    await loadPosts();
-    const saved=posts.find(p=>p.id===currentPostId); if(saved) loadPostIntoEditor(saved.id);
-  }catch(err){setMessage("postMessage",err.message||"Save failed.");}
-}
-
-async function handlePostDelete(){
-  if(!currentPostId) return;
-  const p=posts.find(x=>x.id===currentPostId);
-  if(!confirm(`Delete "${p?.title||"this post"}"?`)) return;
-  try{
-    await deleteDoc(doc(db,"posts",currentPostId));
-    newPost();
-    await loadPosts();
-    setMessage("postMessage","Post deleted.",true);
-  }catch(err){setMessage("postMessage",err.message||"Delete failed.");}
-}
-
-async function handleHomepageSave(e){
-  e.preventDefault();
-  const steps=[0,1,2,3].map(i=>({
-  title:$(`stepTitle${i}`).value.trim(),
-  text:$(`stepText${i}`).value.trim()
-}));
-  const data={
-    eyebrow:$("homeEyebrow").value.trim(),
-    title1:$("homeTitle1").value.trim(),
-    title2:$("homeTitle2").value.trim(),
-    heroText:$("homeHeroText").value.trim(),
-    heroNote:$("homeHeroNote").value.trim(),
-
-contentEyebrow:
-  $("homeContentEyebrow").value.trim(),
-
-contentTitle:
-  $("homeContentTitle").value.trim(),
-
-contentText:
-  $("homeContentText").value.trim(),
-
-steps,
-
-updatedAt:serverTimestamp()
-  };
-  try{await setDoc(doc(db,"siteSettings","home"),data,{merge:true});setMessage("homepageMessage","Homepage saved.",true);}
-  catch(err){setMessage("homepageMessage",err.message||"Save failed.");}
-}
-
-async function handleSettingsSave(e){
-  e.preventDefault();
-  const data={
-    phone:$("settingPhone").value.trim(),
-    email:$("settingEmail").value.trim(),
-    quoteUrl:$("settingQuoteUrl").value.trim(),
-    topBarText:$("settingTopBarText").value.trim(),
-    footerText:$("settingFooterText").value.trim(),
-    updatedAt:serverTimestamp()
-  };
-  try{await setDoc(doc(db,"siteSettings","global"),data,{merge:true});setMessage("settingsMessage","Settings saved.",true);}
-  catch(err){setMessage("settingsMessage",err.message||"Save failed.");}
-}
-
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
-function escapeAttr(s){return escapeHtml(s)}
-
-function bindUI(){
-  document.querySelectorAll(".side-link").forEach(b=>b.addEventListener("click",()=>openPanel(b.dataset.panel)));
-  document.querySelectorAll("[data-open-posts]").forEach(b=>b.addEventListener("click",()=>{openPanel("postsPanel");newPost()}));
-  $("newPostButton").addEventListener("click",newPost);
-  $("postForm").addEventListener("submit",handlePostSave);
-  $("deletePostButton").addEventListener("click",handlePostDelete);
-  $("homepageForm").addEventListener("submit",handleHomepageSave);
-  $("settingsForm").addEventListener("submit",handleSettingsSave);
-  $("logoutButton").addEventListener("click",()=>signOut(auth));
-  $("loginForm").addEventListener("submit",async(e)=>{
-    e.preventDefault();
-    if(!isConfigured) return setMessage("loginMessage","Firebase is not configured yet.");
-    try{await signInWithEmailAndPassword(auth,$("loginEmail").value,$("loginPassword").value);setMessage("loginMessage","Signing in...",true);}
-    catch(err){setMessage("loginMessage",err.message||"Sign-in failed.");}
-  });
-  $("resetPassword").addEventListener("click",async()=>{
-    if(!isConfigured) return setMessage("loginMessage","Firebase is not configured yet.");
-    const email=$("loginEmail").value.trim();
-    if(!email) return setMessage("loginMessage","Enter your email first.");
-    try{await sendPasswordResetEmail(auth,email);setMessage("loginMessage","Password reset email sent.",true);}
-    catch(err){setMessage("loginMessage",err.message||"Could not send reset email.");}
-  });
-}
-
-if(!isConfigured){
-  setupNotice.classList.remove("hidden");
-  setupNotice.textContent="Firebase is not configured. Open firebase-config.js and replace the PASTE_* values from your Firebase Web App settings.";
-  bindUI();
-}else{
-  bindUI();
-  onAuthStateChanged(auth,async(user)=>{
-    if(!user){
-      loginView.classList.remove("hidden");
-      adminView.classList.add("hidden");
-      return;
-    }
-    try{
-      const allowed=await isAdminUser(user);
-      if(!allowed){
-        await signOut(auth);
-        return setMessage("loginMessage","This account is not authorized as an administrator.");
-      }
-      loginView.classList.add("hidden");
-      adminView.classList.remove("hidden");
-      $("currentEmail").textContent=user.email||"";
-      await Promise.all([loadPosts(),loadHomepage(),loadSettings()]);
-    }catch(err){
-      adminView.classList.add("hidden");
-      loginView.classList.remove("hidden");
-      setMessage("loginMessage",err.message||"Admin access check failed.");
-    }
-  });
-}
 /* =========================================================
-   FEATURED IMAGE PREVIEW
+   CLOUDINARY
 ========================================================= */
 
-function updatePostImagePreview() {
+const CLOUDINARY_CLOUD_NAME = "dceou5iz";
 
-    const input =
-        document.getElementById("postImageUrl");
+const CLOUDINARY_UPLOAD_PRESET = "group_travel_blog_images";
 
-    const previewWrap =
-        document.getElementById("postImagePreviewWrap");
+const CLOUDINARY_UPLOAD_URL =
+  `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
-    const preview =
-        document.getElementById("postImagePreview");
 
-    if (!input || !previewWrap || !preview) {
-        return;
+/* =========================================================
+   DEFAULT HOMEPAGE DATA
+========================================================= */
+
+const defaultHome = {
+
+  eyebrow: "GROUP TRAVEL MADE EASY",
+
+  title1: "Travel together.",
+
+  title2: "Plan smarter.",
+
+  heroText:
+    "Your resource for group flight information, travel planning and practical tips for a smooth and successful journey.",
+
+  heroNote:
+    "Get started on our main website.",
+
+  contentEyebrow:
+    "WHAT YOU'LL FIND",
+
+  contentTitle:
+    "Useful travel information, without the clutter.",
+
+  contentText:
+    "One clear content hub for group travel planning, tips and answers to common questions.",
+
+  steps: [
+
+    {
+      title: "REQUEST A GROUP QUOTE",
+      text:
+        "Submit the group travel details on our website or contact us directly at 1-888-928-7796."
+    },
+
+    {
+      title: "EXPERT WILL REVIEW THE QUOTE",
+      text:
+        "Our travel expert team will evaluate your details and look for suitable options to accommodate your request."
+    },
+
+    {
+      title: "WE WILL SEND THE BEST OFFER",
+      text:
+        "Once we review your requirement, we will provide the best available options for your group within your budget."
+    },
+
+    {
+      title: "FINALIZE THE BOOKING",
+      text:
+        "You get to accept one of the available offers and follow the instructions. Later, the e-ticket will be delivered to your email address."
     }
 
-    const url = input.value.trim();
+  ]
 
-    if (!url) {
+};
 
-        preview.src = "";
-        previewWrap.style.display = "none";
 
-        return;
-    }
+/* =========================================================
+   DEFAULT SITE SETTINGS
+========================================================= */
 
-    preview.src = url;
+const defaultSettings = {
 
-    preview.onload = function () {
+  phone:
+    "1-888-928-7796",
 
-        previewWrap.style.display = "block";
+  email:
+    "info@grouptravelairlines.com",
 
-    };
+  quoteUrl:
+    "https://www.grouptravelairlines.com/",
 
-    preview.onerror = function () {
+  topBarText:
+    "Practical travel information for groups, families, teams and business travelers.",
 
-        preview.src = "";
-        previewWrap.style.display = "none";
+  footerText:
+    "Practical travel information for groups, families, teams and business travelers."
 
-        setMessage(
-            "postMessage",
-            "The image URL could not be loaded. Please check the image URL."
-        );
-    };
+};
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let posts = [];
+
+let currentPostId = null;
+
+let slugManuallyChanged = false;
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+function setMessage(id, text, good = false) {
+
+  const el = $(id);
+
+  if (!el) return;
+
+  el.textContent = text;
+
+  el.style.color = good
+    ? "#1f8f58"
+    : "";
+
 }
 
 
-/* UPDATE PREVIEW WHEN URL IS TYPED/PASTED */
+/* =========================================================
+   SLUG
+========================================================= */
 
-const postImageUrlInput =
-    document.getElementById("postImageUrl");
+function slugify(text) {
 
-if (postImageUrlInput) {
+  return (text || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 
-    postImageUrlInput.addEventListener(
-        "input",
-        updatePostImagePreview
+}
+
+
+/* =========================================================
+   DATE
+========================================================= */
+
+function formatDate(value) {
+
+  if (!value) return "";
+
+  if (typeof value.toDate === "function") {
+
+    return value.toDate().toLocaleDateString();
+
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+
+    return "";
+
+  }
+
+  return date.toLocaleDateString();
+
+}
+
+
+/* =========================================================
+   ADMIN CHECK
+========================================================= */
+
+async function isAdminUser(user) {
+
+  if (!user || !db) {
+
+    return false;
+
+  }
+
+  const ref =
+    doc(db, "admins", user.uid);
+
+  const snap =
+    await getDoc(ref);
+
+  return snap.exists();
+
+}
+
+
+/* =========================================================
+   PANEL NAVIGATION
+========================================================= */
+
+function openPanel(id) {
+
+  document
+    .querySelectorAll(".panel")
+    .forEach(panel => {
+      panel.classList.remove("active");
+    });
+
+
+  document
+    .querySelectorAll(".side-link")
+    .forEach(button => {
+      button.classList.remove("active");
+    });
+
+
+  $(id)?.classList.add("active");
+
+
+  document
+    .querySelector(
+      `.side-link[data-panel="${id}"]`
+    )
+    ?.classList.add("active");
+
+}
+
+
+/* =========================================================
+   LOAD POSTS
+========================================================= */
+
+async function loadPosts() {
+
+  const snap =
+    await getDocs(
+      collection(db, "posts")
     );
+
+
+  posts =
+    snap.docs.map(
+      document => ({
+        id: document.id,
+        ...document.data()
+      })
+    );
+
+
+  posts.sort((a, b) => {
+
+    const aa =
+      a.updatedAt?.seconds ||
+      a.createdAt?.seconds ||
+      0;
+
+    const bb =
+      b.updatedAt?.seconds ||
+      b.createdAt?.seconds ||
+      0;
+
+    return bb - aa;
+
+  });
+
+
+  renderPostList();
+
+  renderStats();
+
 }
 
 
-/* REMOVE PREVIEW */
+/* =========================================================
+   DASHBOARD STATS
+========================================================= */
 
-const clearPostImageButton =
-    document.getElementById("clearPostImage");
+function renderStats() {
 
-if (clearPostImageButton) {
+  const published =
+    posts.filter(
+      post => post.published
+    ).length;
 
-    clearPostImageButton.addEventListener(
+
+  $("statTotal").textContent =
+    posts.length;
+
+
+  $("statPublished").textContent =
+    published;
+
+
+  $("statDrafts").textContent =
+    posts.length - published;
+
+
+  $("recentPosts").innerHTML =
+    posts.slice(0, 5).map(post => `
+
+      <div
+        class="post-row"
+        data-id="${post.id}"
+      >
+
+        <strong>
+          ${escapeHtml(
+            post.title || "Untitled"
+          )}
+        </strong>
+
+        <span>
+          ${post.published
+            ? "Published"
+            : "Draft"
+          }
+
+          ${
+            post.updatedAt
+              ? " · " + formatDate(post.updatedAt)
+              : ""
+          }
+
+        </span>
+
+      </div>
+
+    `).join("")
+
+    ||
+
+    '<p class="muted">No posts yet.</p>';
+
+
+  document
+    .querySelectorAll(
+      "#recentPosts .post-row"
+    )
+    .forEach(row => {
+
+      row.addEventListener(
         "click",
-        function () {
+        () => {
 
-            const input =
-                document.getElementById("postImageUrl");
+          openPanel("postsPanel");
 
-            if (input) {
-                input.value = "";
-            }
-
-            updatePostImagePreview();
+          loadPostIntoEditor(
+            row.dataset.id
+          );
 
         }
+      );
+
+    });
+
+}
+
+
+/* =========================================================
+   POST LIST
+========================================================= */
+
+function renderPostList() {
+
+  $("postList").innerHTML =
+
+    posts.map(post => `
+
+      <div
+        class="post-row"
+        data-id="${post.id}"
+      >
+
+        <strong>
+          ${escapeHtml(
+            post.title || "Untitled"
+          )}
+        </strong>
+
+        <span>
+
+          Travel Blog
+
+          ·
+
+          ${
+            post.published
+              ? "Published"
+              : "Draft"
+          }
+
+        </span>
+
+      </div>
+
+    `).join("")
+
+    ||
+
+    '<p class="muted">No posts yet. Click “New Post”.</p>';
+
+
+  document
+    .querySelectorAll(
+      "#postList .post-row"
+    )
+    .forEach(row => {
+
+      row.addEventListener(
+        "click",
+        () => {
+
+          loadPostIntoEditor(
+            row.dataset.id
+          );
+
+        }
+      );
+
+    });
+
+}
+
+
+/* =========================================================
+   HOMEPAGE EDITOR
+========================================================= */
+
+function renderHomepageEditor(data) {
+
+  const home = {
+    ...defaultHome,
+    ...data
+  };
+
+
+  $("homeEyebrow").value =
+    home.eyebrow || "";
+
+
+  $("homeTitle1").value =
+    home.title1 || "";
+
+
+  $("homeTitle2").value =
+    home.title2 || "";
+
+
+  $("homeHeroText").value =
+    home.heroText || "";
+
+
+  $("homeHeroNote").value =
+    home.heroNote || "";
+
+
+  $("homeContentEyebrow").value =
+    home.contentEyebrow ||
+    defaultHome.contentEyebrow;
+
+
+  $("homeContentTitle").value =
+    home.contentTitle ||
+    defaultHome.contentTitle;
+
+
+  $("homeContentText").value =
+    home.contentText ||
+    defaultHome.contentText;
+
+
+  $("stepsEditor").innerHTML =
+    (home.steps || defaultHome.steps)
+      .map((step, index) => `
+
+        <div
+          class="card"
+          style="margin-bottom:12px;padding:16px"
+        >
+
+          <label>
+
+            Step ${index + 1} title
+
+            <input
+              id="stepTitle${index}"
+              value="${escapeAttr(
+                step.title || ""
+              )}"
+            >
+
+          </label>
+
+
+          <label>
+
+            Step ${index + 1} text
+
+            <textarea
+              id="stepText${index}"
+              rows="3"
+            >${escapeHtml(
+              step.text || ""
+            )}</textarea>
+
+          </label>
+
+        </div>
+
+      `)
+      .join("");
+
+}
+
+
+/* =========================================================
+   LOAD HOMEPAGE
+========================================================= */
+
+async function loadHomepage() {
+
+  const snap =
+    await getDoc(
+      doc(
+        db,
+        "siteSettings",
+        "home"
+      )
     );
+
+
+  renderHomepageEditor(
+    snap.exists()
+      ? snap.data()
+      : defaultHome
+  );
+
+}
+
+
+/* =========================================================
+   LOAD SITE SETTINGS
+========================================================= */
+
+async function loadSettings() {
+
+  const snap =
+    await getDoc(
+      doc(
+        db,
+        "siteSettings",
+        "global"
+      )
+    );
+
+
+  const settings =
+    snap.exists()
+      ? snap.data()
+      : defaultSettings;
+
+
+  $("settingPhone").value =
+    settings.phone || "";
+
+
+  $("settingEmail").value =
+    settings.email || "";
+
+
+  $("settingQuoteUrl").value =
+    settings.quoteUrl || "";
+
+
+  $("settingTopBarText").value =
+    settings.topBarText || "";
+
+
+  $("settingFooterText").value =
+    settings.footerText || "";
+
+}
+
+
+/* =========================================================
+   IMAGE PREVIEW
+========================================================= */
+
+function updatePostImagePreview(url = null) {
+
+  const imageUrlInput =
+    $("postImageUrl");
+
+  const preview =
+    $("postImagePreview");
+
+  const emptyState =
+    $("postImagePreviewEmpty");
+
+  const removeButton =
+    $("removeImageButton");
+
+
+  if (!imageUrlInput || !preview) {
+
+    return;
+
+  }
+
+
+  const source =
+    url !== null
+      ? url.trim()
+      : imageUrlInput.value.trim();
+
+
+  if (!source) {
+
+    preview.src = "";
+
+    preview.classList.add(
+      "hidden"
+    );
+
+    emptyState?.classList.remove(
+      "hidden"
+    );
+
+    removeButton?.classList.add(
+      "hidden"
+    );
+
+    return;
+
+  }
+
+
+  preview.src = source;
+
+
+  preview.onload = () => {
+
+    preview.classList.remove(
+      "hidden"
+    );
+
+    emptyState?.classList.add(
+      "hidden"
+    );
+
+    removeButton?.classList.remove(
+      "hidden"
+    );
+
+  };
+
+
+  preview.onerror = () => {
+
+    preview.src = "";
+
+    preview.classList.add(
+      "hidden"
+    );
+
+    emptyState?.classList.remove(
+      "hidden"
+    );
+
+    removeButton?.classList.add(
+      "hidden"
+    );
+
+    setUploadStatus(
+      "The image URL could not be loaded.",
+      false
+    );
+
+  };
+
+}
+
+
+/* =========================================================
+   IMAGE STATUS
+========================================================= */
+
+function setUploadStatus(
+  message,
+  good = false
+) {
+
+  const status =
+    $("imageUploadStatus");
+
+
+  if (!status) return;
+
+
+  status.textContent =
+    message || "";
+
+
+  status.style.color =
+    good
+      ? "#1f8f58"
+      : "";
+
+}
+
+
+/* =========================================================
+   NEW POST
+========================================================= */
+
+function newPost() {
+
+  currentPostId = null;
+
+  slugManuallyChanged = false;
+
+
+  $("postForm")?.reset();
+
+
+  $("postEditorTitle").textContent =
+    "New Blog Post";
+
+
+  $("postStatusBadge").textContent =
+    "Draft";
+
+
+  $("postStatusBadge").className =
+    "status draft";
+
+
+  $("postPublished").checked =
+    false;
+
+
+  $("publishSummary").textContent =
+    "Save as draft";
+
+
+  $("postCategory") &&
+    ($("postCategory").value =
+      "Travel Blog");
+
+
+  $("postImageUrl").value =
+    "";
+
+
+  updatePostImagePreview("");
+
+
+  setUploadStatus("");
+
+
+  setMessage(
+    "postMessage",
+    ""
+  );
+
+}
+
+
+/* =========================================================
+   LOAD POST INTO EDITOR
+========================================================= */
+
+function loadPostIntoEditor(id) {
+
+  const post =
+    posts.find(
+      item => item.id === id
+    );
+
+
+  if (!post) return;
+
+
+  currentPostId =
+    id;
+
+
+  slugManuallyChanged =
+    !!post.slug;
+
+
+  $("postTitle").value =
+    post.title || "";
+
+
+  $("postSlug").value =
+    post.slug || slugify(post.title);
+
+
+  $("postFocusKeyphrase").value =
+    post.focusKeyphrase || "";
+
+
+  $("postSeoTitle").value =
+    post.seoTitle || post.title || "";
+
+
+  $("postMetaDescription").value =
+    post.metaDescription || "";
+
+
+  $("postExcerpt").value =
+    post.excerpt || "";
+
+
+  $("postContent").value =
+    post.content || "";
+
+
+  $("postImageUrl").value =
+    post.imageUrl || "";
+
+
+  $("postPublished").checked =
+    !!post.published;
+
+
+  $("postEditorTitle").textContent =
+    "Edit Blog Post";
+
+
+  $("postStatusBadge").textContent =
+    post.published
+      ? "Published"
+      : "Draft";
+
+
+  $("postStatusBadge").className =
+    "status " +
+    (
+      post.published
+        ? "published"
+        : "draft"
+    );
+
+
+  $("publishSummary").textContent =
+    post.published
+      ? "This post is published"
+      : "Save as draft";
+
+
+  updatePostImagePreview(
+    post.imageUrl || ""
+  );
+
+
+  setUploadStatus("");
+
+
+  setMessage(
+    "postMessage",
+    ""
+  );
+
+}
+
+
+/* =========================================================
+   SAVE POST
+========================================================= */
+
+async function savePost(
+  publishedValue
+) {
+
+  const title =
+    $("postTitle").value.trim();
+
+
+  if (!title) {
+
+    setMessage(
+      "postMessage",
+      "Please enter an article title."
+    );
+
+    $("postTitle").focus();
+
+    return;
+
+  }
+
+
+  const slug =
+    $("postSlug").value.trim() ||
+    slugify(title);
+
+
+  if (!slug) {
+
+    setMessage(
+      "postMessage",
+      "Please enter a valid slug."
+    );
+
+    return;
+
+  }
+
+
+  const published =
+    publishedValue;
+
+
+  const previousPost =
+    currentPostId
+      ? posts.find(
+          post =>
+            post.id === currentPostId
+        )
+      : null;
+
+
+  const payload = {
+
+    title,
+
+    slug,
+
+    category:
+      "Travel Blog",
+
+    focusKeyphrase:
+      $("postFocusKeyphrase")
+        .value
+        .trim(),
+
+    imageUrl:
+      $("postImageUrl")
+        .value
+        .trim(),
+
+    excerpt:
+      $("postExcerpt")
+        .value
+        .trim(),
+
+    content:
+      $("postContent")
+        .value,
+
+    seoTitle:
+      $("postSeoTitle")
+        .value
+        .trim() ||
+      title,
+
+    metaDescription:
+      $("postMetaDescription")
+        .value
+        .trim() ||
+      $("postExcerpt")
+        .value
+        .trim(),
+
+    published,
+
+    updatedAt:
+      serverTimestamp()
+
+  };
+
+
+  try {
+
+    if (currentPostId) {
+
+      if (
+        published &&
+        !previousPost?.published
+      ) {
+
+        payload.publishedAt =
+          serverTimestamp();
+
+      }
+
+
+      await updateDoc(
+        doc(
+          db,
+          "posts",
+          currentPostId
+        ),
+        payload
+      );
+
+    } else {
+
+      payload.createdAt =
+        serverTimestamp();
+
+
+      if (published) {
+
+        payload.publishedAt =
+          serverTimestamp();
+
+      }
+
+
+      const newReference =
+        await addDoc(
+          collection(
+            db,
+            "posts"
+          ),
+          payload
+        );
+
+
+      currentPostId =
+        newReference.id;
+
+    }
+
+
+    setMessage(
+      "postMessage",
+      published
+        ? "Post published successfully."
+        : "Draft saved successfully.",
+      true
+    );
+
+
+    await loadPosts();
+
+
+    if (currentPostId) {
+
+      loadPostIntoEditor(
+        currentPostId
+      );
+
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      "Post save error:",
+      error
+    );
+
+
+    setMessage(
+      "postMessage",
+      error.message ||
+      "Unable to save the post."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   HOMEPAGE SAVE
+========================================================= */
+
+async function handleHomepageSave(
+  event
+) {
+
+  event.preventDefault();
+
+
+  const steps =
+    [0, 1, 2, 3].map(
+      index => ({
+
+        title:
+          $(
+            `stepTitle${index}`
+          ).value.trim(),
+
+        text:
+          $(
+            `stepText${index}`
+          ).value.trim()
+
+      })
+    );
+
+
+  const data = {
+
+    eyebrow:
+      $("homeEyebrow")
+        .value
+        .trim(),
+
+    title1:
+      $("homeTitle1")
+        .value
+        .trim(),
+
+    title2:
+      $("homeTitle2")
+        .value
+        .trim(),
+
+    heroText:
+      $("homeHeroText")
+        .value
+        .trim(),
+
+    heroNote:
+      $("homeHeroNote")
+        .value
+        .trim(),
+
+    contentEyebrow:
+      $("homeContentEyebrow")
+        .value
+        .trim(),
+
+    contentTitle:
+      $("homeContentTitle")
+        .value
+        .trim(),
+
+    contentText:
+      $("homeContentText")
+        .value
+        .trim(),
+
+    steps,
+
+    updatedAt:
+      serverTimestamp()
+
+  };
+
+
+  try {
+
+    await setDoc(
+      doc(
+        db,
+        "siteSettings",
+        "home"
+      ),
+      data,
+      { merge: true }
+    );
+
+
+    setMessage(
+      "homepageMessage",
+      "Homepage saved successfully.",
+      true
+    );
+
+  } catch (error) {
+
+    setMessage(
+      "homepageMessage",
+      error.message ||
+      "Unable to save homepage."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   SETTINGS SAVE
+========================================================= */
+
+async function handleSettingsSave(
+  event
+) {
+
+  event.preventDefault();
+
+
+  const data = {
+
+    phone:
+      $("settingPhone")
+        .value
+        .trim(),
+
+    email:
+      $("settingEmail")
+        .value
+        .trim(),
+
+    quoteUrl:
+      $("settingQuoteUrl")
+        .value
+        .trim(),
+
+    topBarText:
+      $("settingTopBarText")
+        .value
+        .trim(),
+
+    footerText:
+      $("settingFooterText")
+        .value
+        .trim(),
+
+    updatedAt:
+      serverTimestamp()
+
+  };
+
+
+  try {
+
+    await setDoc(
+      doc(
+        db,
+        "siteSettings",
+        "global"
+      ),
+      data,
+      { merge: true }
+    );
+
+
+    setMessage(
+      "settingsMessage",
+      "Site settings saved successfully.",
+      true
+    );
+
+  } catch (error) {
+
+    setMessage(
+      "settingsMessage",
+      error.message ||
+      "Unable to save settings."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   CLOUDINARY IMAGE UPLOAD
+========================================================= */
+
+async function uploadFeaturedImage(
+  file
+) {
+
+  if (!file) return;
+
+
+  if (!file.type.startsWith("image/")) {
+
+    setUploadStatus(
+      "Please select an image file.",
+      false
+    );
+
+    return;
+
+  }
+
+
+  const maxSize =
+    10 * 1024 * 1024;
+
+
+  if (file.size > maxSize) {
+
+    setUploadStatus(
+      "Please choose an image smaller than 10 MB.",
+      false
+    );
+
+    return;
+
+  }
+
+
+  const uploadButton =
+    $("uploadImageButton");
+
+
+  uploadButton.disabled =
+    true;
+
+
+  uploadButton.textContent =
+    "Uploading...";
+
+
+  setUploadStatus(
+    "Uploading image..."
+  );
+
+
+  try {
+
+    const formData =
+      new FormData();
+
+
+    formData.append(
+      "file",
+      file
+    );
+
+
+    formData.append(
+      "upload_preset",
+      CLOUDINARY_UPLOAD_PRESET
+    );
+
+
+    const response =
+      await fetch(
+        CLOUDINARY_UPLOAD_URL,
+        {
+          method: "POST",
+          body: formData
+        }
+      );
+
+
+    const result =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        result.error?.message ||
+        "Cloudinary upload failed."
+      );
+
+    }
+
+
+    const imageUrl =
+      result.secure_url;
+
+
+    if (!imageUrl) {
+
+      throw new Error(
+        "Cloudinary did not return an image URL."
+      );
+
+    }
+
+
+    $("postImageUrl").value =
+      imageUrl;
+
+
+    updatePostImagePreview(
+      imageUrl
+    );
+
+
+    setUploadStatus(
+      "Image uploaded successfully.",
+      true
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Cloudinary upload error:",
+      error
+    );
+
+
+    setUploadStatus(
+      error.message ||
+      "Image upload failed.",
+      false
+    );
+
+  } finally {
+
+    uploadButton.disabled =
+      false;
+
+
+    uploadButton.textContent =
+      "Upload Image";
+
+
+    $("postImageFile").value =
+      "";
+
+  }
+
+}
+
+
+/* =========================================================
+   UI BINDING
+========================================================= */
+
+function bindUI() {
+
+
+  /* SIDEBAR */
+
+  document
+    .querySelectorAll(".side-link")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          openPanel(
+            button.dataset.panel
+          );
+
+        }
+      );
+
+    });
+
+
+  /* DASHBOARD NEW POST */
+
+  document
+    .querySelectorAll("[data-open-posts]")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          openPanel("postsPanel");
+
+          newPost();
+
+        }
+      );
+
+    });
+
+
+  /* NEW POST */
+
+  $("newPostButton")
+    ?.addEventListener(
+      "click",
+      newPost
+    );
+
+
+  /* FORM SUBMIT */
+
+  $("postForm")
+    ?.addEventListener(
+      "submit",
+      event => {
+
+        event.preventDefault();
+
+        savePost(
+          $("postPublished").checked
+        );
+
+      }
+    );
+
+
+  /* SAVE DRAFT */
+
+  $("saveDraftButton")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        $("postPublished").checked =
+          false;
+
+        updatePublishSummary();
+
+        savePost(false);
+
+      }
+    );
+
+
+  /* PUBLISH */
+
+  $("publishPostButton")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        $("postPublished").checked =
+          true;
+
+        updatePublishSummary();
+
+        savePost(true);
+
+      }
+    );
+
+
+  /* PUBLISH CHECKBOX */
+
+  $("postPublished")
+    ?.addEventListener(
+      "change",
+      updatePublishSummary
+    );
+
+
+  /* TITLE → SLUG */
+
+  $("postTitle")
+    ?.addEventListener(
+      "input",
+      () => {
+
+        if (
+          !slugManuallyChanged
+        ) {
+
+          $("postSlug").value =
+            slugify(
+              $("postTitle").value
+            );
+
+        }
+
+      }
+    );
+
+
+  /* MANUAL SLUG */
+
+  $("postSlug")
+    ?.addEventListener(
+      "input",
+      () => {
+
+        slugManuallyChanged =
+          true;
+
+      }
+    );
+
+
+  /* IMAGE URL LIVE PREVIEW */
+
+  $("postImageUrl")
+    ?.addEventListener(
+      "input",
+      () => {
+
+        updatePostImagePreview();
+
+      }
+    );
+
+
+  /* USE IMAGE URL */
+
+  $("useImageUrlButton")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        updatePostImagePreview();
+
+      }
+    );
+
+
+  /* REMOVE IMAGE */
+
+  $("removeImageButton")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        $("postImageUrl").value =
+          "";
+
+        updatePostImagePreview("");
+
+        setUploadStatus("");
+
+      }
+    );
+
+
+  /* SELECT IMAGE */
+
+  $("uploadImageButton")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        $("postImageFile")
+          ?.click();
+
+      }
+    );
+
+
+  /* IMAGE FILE */
+
+  $("postImageFile")
+    ?.addEventListener(
+      "change",
+      event => {
+
+        const file =
+          event.target.files?.[0];
+
+
+        if (file) {
+
+          uploadFeaturedImage(
+            file
+          );
+
+        }
+
+      }
+    );
+
+
+  /* HOMEPAGE */
+
+  $("homepageForm")
+    ?.addEventListener(
+      "submit",
+      handleHomepageSave
+    );
+
+
+  /* SETTINGS */
+
+  $("settingsForm")
+    ?.addEventListener(
+      "submit",
+      handleSettingsSave
+    );
+
+
+  /* LOGOUT */
+
+  $("logoutButton")
+    ?.addEventListener(
+      "click",
+      () => {
+
+        signOut(auth);
+
+      }
+    );
+
+
+  /* LOGIN */
+
+  $("loginForm")
+    ?.addEventListener(
+      "submit",
+      async event => {
+
+        event.preventDefault();
+
+
+        if (!isConfigured) {
+
+          return setMessage(
+            "loginMessage",
+            "Firebase is not configured yet."
+          );
+
+        }
+
+
+        try {
+
+          await signInWithEmailAndPassword(
+            auth,
+            $("loginEmail").value,
+            $("loginPassword").value
+          );
+
+
+          setMessage(
+            "loginMessage",
+            "Signing in...",
+            true
+          );
+
+        } catch (error) {
+
+          setMessage(
+            "loginMessage",
+            error.message ||
+            "Sign-in failed."
+          );
+
+        }
+
+      }
+    );
+
+
+  /* PASSWORD RESET */
+
+  $("resetPassword")
+    ?.addEventListener(
+      "click",
+      async () => {
+
+        if (!isConfigured) {
+
+          return setMessage(
+            "loginMessage",
+            "Firebase is not configured yet."
+          );
+
+        }
+
+
+        const email =
+          $("loginEmail")
+            .value
+            .trim();
+
+
+        if (!email) {
+
+          return setMessage(
+            "loginMessage",
+            "Enter your email first."
+          );
+
+        }
+
+
+        try {
+
+          await sendPasswordResetEmail(
+            auth,
+            email
+          );
+
+
+          setMessage(
+            "loginMessage",
+            "Password reset email sent.",
+            true
+          );
+
+        } catch (error) {
+
+          setMessage(
+            "loginMessage",
+            error.message ||
+            "Could not send reset email."
+          );
+
+        }
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   PUBLISHING SUMMARY
+========================================================= */
+
+function updatePublishSummary() {
+
+  const checkbox =
+    $("postPublished");
+
+
+  const summary =
+    $("publishSummary");
+
+
+  if (!checkbox || !summary) {
+
+    return;
+
+  }
+
+
+  summary.textContent =
+    checkbox.checked
+      ? "This post will be published"
+      : "Save as draft";
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHtml(value) {
+
+  return String(value || "")
+    .replace(
+      /[&<>"']/g,
+      character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[character])
+    );
+
+}
+
+
+function escapeAttr(value) {
+
+  return escapeHtml(
+    value
+  );
+
+}
+
+
+/* =========================================================
+   START APPLICATION
+========================================================= */
+
+if (!isConfigured) {
+
+  setupNotice.classList.remove(
+    "hidden"
+  );
+
+
+  setupNotice.textContent =
+    "Firebase is not configured. Open firebase-config.js and add your Firebase Web App configuration.";
+
+
+  bindUI();
+
+} else {
+
+  bindUI();
+
+
+  onAuthStateChanged(
+    auth,
+    async user => {
+
+      if (!user) {
+
+        loginView.classList.remove(
+          "hidden"
+        );
+
+        adminView.classList.add(
+          "hidden"
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        const allowed =
+          await isAdminUser(
+            user
+          );
+
+
+        if (!allowed) {
+
+          await signOut(
+            auth
+          );
+
+
+          return setMessage(
+            "loginMessage",
+            "This account is not authorized as an administrator."
+          );
+
+        }
+
+
+        loginView.classList.add(
+          "hidden"
+        );
+
+
+        adminView.classList.remove(
+          "hidden"
+        );
+
+
+        $("currentEmail").textContent =
+          user.email || "";
+
+
+        await Promise.all([
+          loadPosts(),
+          loadHomepage(),
+          loadSettings()
+        ]);
+
+
+        newPost();
+
+      } catch (error) {
+
+        console.error(
+          "Admin initialization error:",
+          error
+        );
+
+
+        adminView.classList.add(
+          "hidden"
+        );
+
+
+        loginView.classList.remove(
+          "hidden"
+        );
+
+
+        setMessage(
+          "loginMessage",
+          error.message ||
+          "Admin access check failed."
+        );
+
+      }
+
+    }
+  );
+
 }
