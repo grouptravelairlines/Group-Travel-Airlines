@@ -73,7 +73,7 @@ img{max-width:100%;display:block}
   overflow:hidden;
   background:
     linear-gradient(90deg,rgba(246,250,255,.96) 0%,rgba(246,250,255,.78) 38%,rgba(246,250,255,.10) 65%,rgba(246,250,255,0) 100%),
-    url("assets/hero-airplane.svg") center/cover no-repeat;
+    url("assets/hero-airplane.jpg") center/cover no-repeat;
 }
 .hero-content{
   min-height:530px;
@@ -188,9 +188,9 @@ img{max-width:100%;display:block}
   background-position:center;
   background-size:cover;
 }
-.card-plane{background-image:url("assets/card-plane.svg")}
-.card-airport{background-image:url("assets/card-airport.svg")}
-.card-mountain{background-image:url("assets/card-mountain.svg")}
+.card-plane{background-image:url("assets/group-travel.jpg")}
+.card-airport{background-image:url("assets/travel-planning.jpg")}
+.card-mountain{background-image:url("assets/travel-articles.jpg")}
 .card-body{padding:24px}
 .card-icon{
   width:44px;height:44px;
