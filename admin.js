@@ -159,6 +159,7 @@ async function loadSettings(){
 function newPost(){
   currentPostId=null;
   $("postForm").reset();
+  updatePostImagePreview();
   $("postCategory").value="Travel Guide";
   $("postPublished").checked=false;
   $("postEditorTitle").textContent="New Blog Post";
@@ -175,6 +176,7 @@ function loadPostIntoEditor(id){
   $("postSlug").value=p.slug||"";
   $("postCategory").value=p.category||"Travel Guide";
   $("postImageUrl").value=p.imageUrl||"";
+  updatePostImagePreview();
   $("postExcerpt").value=p.excerpt||"";
   $("postContent").value=p.content||"";
   $("postSeoTitle").value=p.seoTitle||"";
@@ -331,4 +333,91 @@ if(!isConfigured){
       setMessage("loginMessage",err.message||"Admin access check failed.");
     }
   });
+}
+/* =========================================================
+   FEATURED IMAGE PREVIEW
+========================================================= */
+
+function updatePostImagePreview() {
+
+    const input =
+        document.getElementById("postImageUrl");
+
+    const previewWrap =
+        document.getElementById("postImagePreviewWrap");
+
+    const preview =
+        document.getElementById("postImagePreview");
+
+    if (!input || !previewWrap || !preview) {
+        return;
+    }
+
+    const url = input.value.trim();
+
+    if (!url) {
+
+        preview.src = "";
+        previewWrap.style.display = "none";
+
+        return;
+    }
+
+    preview.src = url;
+
+    preview.onload = function () {
+
+        previewWrap.style.display = "block";
+
+    };
+
+    preview.onerror = function () {
+
+        preview.src = "";
+        previewWrap.style.display = "none";
+
+        setMessage(
+            "postMessage",
+            "The image URL could not be loaded. Please check the image URL."
+        );
+    };
+}
+
+
+/* UPDATE PREVIEW WHEN URL IS TYPED/PASTED */
+
+const postImageUrlInput =
+    document.getElementById("postImageUrl");
+
+if (postImageUrlInput) {
+
+    postImageUrlInput.addEventListener(
+        "input",
+        updatePostImagePreview
+    );
+}
+
+
+/* REMOVE PREVIEW */
+
+const clearPostImageButton =
+    document.getElementById("clearPostImage");
+
+if (clearPostImageButton) {
+
+    clearPostImageButton.addEventListener(
+        "click",
+        function () {
+
+            const input =
+                document.getElementById("postImageUrl");
+
+            if (input) {
+                input.value = "";
+            }
+
+            updatePostImagePreview();
+
+        }
+    );
 }
