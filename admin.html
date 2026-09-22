@@ -107,9 +107,36 @@
                   <label>Category
                     <input id="postCategory" type="text" value="Travel Guide">
                   </label>
-                  <label>Featured Image URL
-                    <input id="postImageUrl" type="url" placeholder="https://...">
-                  </label>
+                  <div class="featured-image-field">
+  <label for="postImageUrl">Featured Image URL</label>
+
+  <input
+    id="postImageUrl"
+    type="url"
+    placeholder="https://example.com/image.jpg"
+  >
+
+  <small>
+    Paste the direct URL of the image you want to show with this blog post.
+  </small>
+
+  <div id="postImagePreviewWrap" class="image-preview-wrap" style="display:none;">
+    <p>Image Preview</p>
+
+    <img
+      id="postImagePreview"
+      src=""
+      alt="Featured image preview"
+    >
+
+    <button
+      type="button"
+      id="clearPostImage"
+    >
+      Remove Preview
+    </button>
+  </div>
+</div>
                 </div>
 
                 <label>Excerpt
