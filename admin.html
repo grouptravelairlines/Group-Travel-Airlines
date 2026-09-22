@@ -3,280 +3,1003 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>Group Travel Airlines — Admin</title>
-  <link rel="stylesheet" href="admin.css">
+
+  <link rel="stylesheet" href="/admin.css">
 </head>
+
 <body>
+
   <div id="setupNotice" class="notice hidden"></div>
 
+
+  <!-- =========================================================
+       LOGIN
+  ========================================================== -->
+
   <section id="loginView" class="auth-shell">
+
     <div class="auth-card">
-      <img src="assets/logo.png" alt="Group Travel Airlines" class="auth-logo">
+
+      <img
+        src="/assets/logo.png"
+        alt="Group Travel Airlines"
+        class="auth-logo"
+      >
+
       <p class="eyebrow">CONTENT MANAGEMENT</p>
+
       <h1>Admin Login</h1>
-      <p class="muted">Sign in to manage the homepage and publish Blog content.</p>
+
+      <p class="muted">
+        Sign in to manage your Group Travel Airlines content.
+      </p>
+
 
       <form id="loginForm">
-        <label>Email
-          <input id="loginEmail" type="email" autocomplete="username" required>
+
+        <label>
+          Email
+          <input
+            id="loginEmail"
+            type="email"
+            autocomplete="username"
+            required
+          >
         </label>
-        <label>Password
-          <input id="loginPassword" type="password" autocomplete="current-password" required>
+
+
+        <label>
+          Password
+          <input
+            id="loginPassword"
+            type="password"
+            autocomplete="current-password"
+            required
+          >
         </label>
-        <button class="primary" type="submit">Sign in</button>
+
+
+        <button
+          class="primary full-button"
+          type="submit"
+        >
+          Sign in
+        </button>
+
       </form>
 
-      <button id="resetPassword" class="link-button" type="button">Forgot password?</button>
+
+      <button
+        id="resetPassword"
+        class="link-button"
+        type="button"
+      >
+        Forgot password?
+      </button>
+
+
       <p id="loginMessage" class="message"></p>
+
     </div>
+
   </section>
+
+
+
+  <!-- =========================================================
+       ADMIN
+  ========================================================== -->
 
   <section id="adminView" class="admin-shell hidden">
+
+
+    <!-- TOP BAR -->
+
     <header class="admin-topbar">
-      <div>
-        <strong>Group Travel Airlines</strong>
-        <span class="admin-badge">ADMIN</span>
+
+      <div class="brand-area">
+
+        <img
+          src="/assets/logo.png"
+          alt="Group Travel Airlines"
+          class="admin-logo"
+        >
+
+        <span class="admin-badge">
+          ADMIN
+        </span>
+
       </div>
+
+
       <div class="top-actions">
-        <a href="index.html" target="_blank">View site ↗</a>
+
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener"
+        >
+          View site ↗
+        </a>
+
         <span id="currentEmail"></span>
-        <button id="logoutButton" class="ghost">Logout</button>
+
+        <button
+          id="logoutButton"
+          class="ghost"
+          type="button"
+        >
+          Logout
+        </button>
+
       </div>
+
     </header>
 
+
+
+    <!-- MAIN ADMIN LAYOUT -->
+
     <div class="admin-layout">
+
+
+      <!-- SIDEBAR -->
+
       <aside class="sidebar">
-        <button class="side-link active" data-panel="dashboardPanel">Dashboard</button>
-        <button class="side-link" data-panel="postsPanel">Blog Posts</button>
-        <button class="side-link" data-panel="homepagePanel">Homepage</button>
-        <button class="side-link" data-panel="settingsPanel">Site Settings</button>
+
+        <button
+          class="side-link active"
+          data-panel="dashboardPanel"
+          type="button"
+        >
+          Dashboard
+        </button>
+
+
+        <button
+          class="side-link"
+          data-panel="postsPanel"
+          type="button"
+        >
+          Blog Posts
+        </button>
+
+
+        <button
+          class="side-link"
+          data-panel="homepagePanel"
+          type="button"
+        >
+          Homepage
+        </button>
+
+
+        <button
+          class="side-link"
+          data-panel="settingsPanel"
+          type="button"
+        >
+          Site Settings
+        </button>
+
       </aside>
 
+
+
+      <!-- CONTENT -->
+
       <main class="admin-main">
-        <section id="dashboardPanel" class="panel active">
+
+
+        <!-- =====================================================
+             DASHBOARD
+        ====================================================== -->
+
+        <section
+          id="dashboardPanel"
+          class="panel active"
+        >
+
           <div class="panel-heading">
+
             <div>
-              <p class="eyebrow">OVERVIEW</p>
-              <h2>Content Dashboard</h2>
+
+              <p class="eyebrow">
+                OVERVIEW
+              </p>
+
+              <h2>
+                Content Dashboard
+              </h2>
+
             </div>
-            <button class="primary" data-open-posts>+ New Blog Post</button>
+
+
+            <button
+              class="primary"
+              type="button"
+              data-open-posts
+            >
+              + New Blog Post
+            </button>
+
           </div>
+
+
           <div class="stats-grid">
-            <div class="stat"><span>Total Posts</span><strong id="statTotal">0</strong></div>
-            <div class="stat"><span>Published</span><strong id="statPublished">0</strong></div>
-            <div class="stat"><span>Drafts</span><strong id="statDrafts">0</strong></div>
+
+            <div class="stat">
+
+              <span>
+                Total Posts
+              </span>
+
+              <strong id="statTotal">
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="stat">
+
+              <span>
+                Published
+              </span>
+
+              <strong id="statPublished">
+                0
+              </strong>
+
+            </div>
+
+
+            <div class="stat">
+
+              <span>
+                Drafts
+              </span>
+
+              <strong id="statDrafts">
+                0
+              </strong>
+
+            </div>
+
           </div>
+
+
           <div class="card">
-            <div class="card-heading"><h3>Recent Posts</h3></div>
-            <div id="recentPosts"></div>
-          </div>
-        </section>
 
-        <section id="postsPanel" class="panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">CONTENT</p>
-              <h2>Blog Posts</h2>
-            </div>
-            <button id="newPostButton" class="primary">+ New Post</button>
-          </div>
+            <div class="card-heading">
 
-          <div class="editor-layout">
-            <div class="card">
-              <div id="postList"></div>
-            </div>
+              <div>
 
-            <div class="card editor-card">
-              <div class="editor-title-row">
-                <h3 id="postEditorTitle">New Blog Post</h3>
-                <span id="postStatusBadge" class="status draft">Draft</span>
+                <p class="eyebrow">
+                  CONTENT
+                </p>
+
+                <h3>
+                  Recent Posts
+                </h3>
+
               </div>
 
+            </div>
+
+
+            <div id="recentPosts"></div>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- =====================================================
+             BLOG POSTS
+        ====================================================== -->
+
+        <section
+          id="postsPanel"
+          class="panel"
+        >
+
+
+          <div class="panel-heading">
+
+            <div>
+
+              <p class="eyebrow">
+                CONTENT
+              </p>
+
+              <h2>
+                Blog Posts
+              </h2>
+
+            </div>
+
+
+            <button
+              id="newPostButton"
+              class="primary"
+              type="button"
+            >
+              + New Post
+            </button>
+
+          </div>
+
+
+
+          <div class="posts-page-layout">
+
+
+            <!-- POST LIST -->
+
+            <div class="posts-list-card card">
+
+              <div class="card-heading">
+
+                <div>
+
+                  <h3>
+                    All Posts
+                  </h3>
+
+                  <p class="muted small-text">
+                    Click a post to edit it.
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div id="postList"></div>
+
+            </div>
+
+
+
+            <!-- EDITOR -->
+
+            <div class="post-editor-card card">
+
+
               <form id="postForm">
-                <input id="postId" type="hidden">
 
-                <label>Title
-                  <input id="postTitle" type="text" required>
-                </label>
+                <input
+                  id="postId"
+                  type="hidden"
+                >
 
-                <label>Slug
-                  <input id="postSlug" type="text" placeholder="auto-generated-from-title">
-                </label>
 
-                <div class="two-col">
-                  <label>Category
-                    <input id="postCategory" type="text" value="Travel Guide">
-                  </label>
-                  <div class="featured-image-field">
-  <label for="postImageUrl">Featured Image URL</label>
+                <!-- EDITOR HEADER -->
 
-  <input
-    id="postImageUrl"
-    type="url"
-    placeholder="https://example.com/image.jpg"
-  >
+                <div class="editor-header">
 
-  <small>
-    Paste the direct URL of the image you want to show with this blog post.
-  </small>
+                  <div>
 
-  <div id="postImagePreviewWrap" class="image-preview-wrap" style="display:none;">
-    <p>Image Preview</p>
+                    <p class="eyebrow">
+                      BLOG ARTICLE
+                    </p>
 
-    <img
-      id="postImagePreview"
-      src=""
-      alt="Featured image preview"
-    >
+                    <h2 id="postEditorTitle">
+                      New Blog Post
+                    </h2>
 
-    <button
-      type="button"
-      id="clearPostImage"
-    >
-      Remove Preview
-    </button>
-  </div>
-</div>
+                  </div>
+
+
+                  <span
+                    id="postStatusBadge"
+                    class="status draft"
+                  >
+                    Draft
+                  </span>
+
                 </div>
 
-                <label>Excerpt
-                  <textarea id="postExcerpt" rows="3" required></textarea>
-                </label>
 
-                <label>Article Content
-                  <textarea id="postContent" rows="14" placeholder="Write the article here..."></textarea>
-                </label>
 
-                <div class="two-col">
-                  <label>SEO Title
-                    <input id="postSeoTitle" type="text">
+                <!-- TITLE -->
+
+                <div class="form-section">
+
+                  <label>
+                    Article Title
+
+                    <input
+                      id="postTitle"
+                      type="text"
+                      placeholder="Enter the article title..."
+                      required
+                    >
+
                   </label>
-                  <label>Meta Description
-                    <input id="postMetaDescription" type="text">
-                  </label>
+
                 </div>
 
-                <label class="checkbox-line">
-                  <input id="postPublished" type="checkbox">
-                  Publish this post
-                </label>
+
+
+                <!-- SEO BASICS -->
+
+                <div class="form-section">
+
+                  <div class="section-label-row">
+
+                    <div>
+
+                      <h3>
+                        SEO Basics
+                      </h3>
+
+                      <p class="muted small-text">
+                        Set the main search information for this article.
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="two-col">
+
+                    <label>
+                      Focus Keyphrase
+
+                      <input
+                        id="postFocusKeyphrase"
+                        type="text"
+                        placeholder="e.g. group flight booking"
+                      >
+
+                    </label>
+
+
+                    <label>
+                      Slug
+
+                      <input
+                        id="postSlug"
+                        type="text"
+                        placeholder="auto-generated-from-title"
+                      >
+
+                    </label>
+
+                  </div>
+
+
+                  <label>
+                    SEO Title
+
+                    <input
+                      id="postSeoTitle"
+                      type="text"
+                      placeholder="SEO title for search results..."
+                    >
+
+                  </label>
+
+
+                  <label>
+                    Meta Description
+
+                    <textarea
+                      id="postMetaDescription"
+                      rows="3"
+                      placeholder="Write a clear search-engine description..."
+                    ></textarea>
+
+                  </label>
+
+                </div>
+
+
+
+                <!-- ARTICLE EXCERPT -->
+
+                <div class="form-section">
+
+                  <label>
+                    Excerpt
+
+                    <textarea
+                      id="postExcerpt"
+                      rows="4"
+                      placeholder="Short introduction that will appear on blog cards..."
+                      required
+                    ></textarea>
+
+                  </label>
+
+                </div>
+
+
+
+                <!-- ARTICLE CONTENT -->
+
+                <div class="form-section">
+
+                  <label>
+
+                    Article Content
+
+                    <textarea
+                      id="postContent"
+                      rows="18"
+                      placeholder="Write the complete article here..."
+                    ></textarea>
+
+                  </label>
+
+
+                  <p class="field-note">
+                    You can write normal article text here. The saved content will be displayed on the article page.
+                  </p>
+
+                </div>
+
+
+
+                <!-- FEATURED IMAGE -->
+
+                <div class="form-section">
+
+                  <div class="section-label-row">
+
+                    <div>
+
+                      <h3>
+                        Featured Image
+                      </h3>
+
+                      <p class="muted small-text">
+                        Upload an image or paste an image URL.
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="featured-image-layout">
+
+
+                    <!-- IMAGE PREVIEW -->
+
+                    <div class="featured-preview-panel">
+
+                      <div
+                        id="postImagePreviewEmpty"
+                        class="image-placeholder"
+                      >
+
+                        <span>
+                          No featured image selected
+                        </span>
+
+                      </div>
+
+
+                      <img
+                        id="postImagePreview"
+                        class="featured-preview hidden"
+                        src=""
+                        alt="Featured image preview"
+                      >
+
+                    </div>
+
+
+
+                    <!-- IMAGE CONTROLS -->
+
+                    <div class="featured-controls">
+
+                      <input
+                        id="postImageFile"
+                        type="file"
+                        accept="image/*"
+                        class="hidden"
+                      >
+
+
+                      <button
+                        id="uploadImageButton"
+                        class="primary"
+                        type="button"
+                      >
+                        Upload Image
+                      </button>
+
+
+                      <label class="url-field-label">
+
+                        Image URL
+
+                        <input
+                          id="postImageUrl"
+                          type="url"
+                          placeholder="https://example.com/image.jpg"
+                        >
+
+                      </label>
+
+
+                      <button
+                        id="useImageUrlButton"
+                        class="secondary-button"
+                        type="button"
+                      >
+                        Use Image URL
+                      </button>
+
+
+                      <button
+                        id="removeImageButton"
+                        class="danger-button hidden"
+                        type="button"
+                      >
+                        Remove Image
+                      </button>
+
+
+                      <p
+                        id="imageUploadStatus"
+                        class="upload-status"
+                      ></p>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+
+                <!-- PUBLISH -->
+
+                <div class="publish-section">
+
+                  <div>
+
+                    <p class="eyebrow">
+                      PUBLISHING
+                    </p>
+
+                    <strong id="publishSummary">
+                      Save as draft
+                    </strong>
+
+                    <p class="muted small-text">
+                      Publish only when the article is ready for the public website.
+                    </p>
+
+                  </div>
+
+
+                  <label class="publish-toggle">
+
+                    <input
+                      id="postPublished"
+                      type="checkbox"
+                    >
+
+                    <span>
+                      Publish this post
+                    </span>
+
+                  </label>
+
+                </div>
+
+
+
+                <!-- ACTIONS -->
 
                 <div class="form-actions">
-                  <button class="primary" type="submit">Save Post</button>
-                  <button id="deletePostButton" class="danger hidden" type="button">Delete Post</button>
+
+                  <button
+                    id="saveDraftButton"
+                    class="secondary-button"
+                    type="button"
+                  >
+                    Save Draft
+                  </button>
+
+
+                  <button
+                    id="publishPostButton"
+                    class="primary"
+                    type="button"
+                  >
+                    Publish Post
+                  </button>
+
                 </div>
-                <p id="postMessage" class="message"></p>
+
+
+                <p
+                  id="postMessage"
+                  class="message"
+                ></p>
+
               </form>
+
             </div>
+
           </div>
+
         </section>
 
-        <section id="homepagePanel" class="panel">
+
+
+        <!-- =====================================================
+             HOMEPAGE
+        ====================================================== -->
+
+        <section
+          id="homepagePanel"
+          class="panel"
+        >
+
           <div class="panel-heading">
+
             <div>
-              <p class="eyebrow">EDIT CONTENT</p>
-              <h2>Homepage</h2>
+
+              <p class="eyebrow">
+                EDIT CONTENT
+              </p>
+
+              <h2>
+                Homepage
+              </h2>
+
             </div>
+
           </div>
 
-          <form id="homepageForm" class="card form-card">
-            <h3>Hero</h3>
+
+          <form
+            id="homepageForm"
+            class="card form-card"
+          >
+
+            <h3>
+              Hero
+            </h3>
+
+
             <div class="two-col">
-              <label>Eyebrow
+
+              <label>
+                Eyebrow
                 <input id="homeEyebrow" type="text">
               </label>
-              <label>Hero Note
+
+
+              <label>
+                Hero Note
                 <input id="homeHeroNote" type="text">
               </label>
+
             </div>
 
+
             <div class="two-col">
-              <label>Headline — line 1
+
+              <label>
+                Headline — line 1
                 <input id="homeTitle1" type="text">
               </label>
-              <label>Headline — line 2
+
+
+              <label>
+                Headline — line 2
                 <input id="homeTitle2" type="text">
               </label>
+
             </div>
 
-            <label>Hero Description
-              <textarea id="homeHeroText" rows="3"></textarea>
+
+            <label>
+              Hero Description
+
+              <textarea
+                id="homeHeroText"
+                rows="3"
+              ></textarea>
+
             </label>
 
-            <h3>Booking Steps</h3>
+
+
+            <h3>
+              Booking Steps
+            </h3>
+
+
             <div id="stepsEditor"></div>
 
-            <h3>What You'll Find</h3>
 
-<div class="two-col">
 
-  <label>
-    Eyebrow
-    <input id="homeContentEyebrow" type="text">
-  </label>
+            <h3>
+              What You'll Find
+            </h3>
 
-  <label>
-    Heading
-    <input id="homeContentTitle" type="text">
-  </label>
 
-</div>
-
-<label>
-  Description
-  <textarea
-    id="homeContentText"
-    rows="3"></textarea>
-</label>
-
-            <button class="primary" type="submit">Save Homepage</button>
-            <p id="homepageMessage" class="message"></p>
-          </form>
-        </section>
-
-        <section id="settingsPanel" class="panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">GLOBAL SETTINGS</p>
-              <h2>Site Settings</h2>
-            </div>
-          </div>
-
-          <form id="settingsForm" class="card form-card">
             <div class="two-col">
-              <label>Phone
-                <input id="settingPhone" type="text">
+
+              <label>
+                Eyebrow
+                <input
+                  id="homeContentEyebrow"
+                  type="text"
+                >
               </label>
-              <label>Email
-                <input id="settingEmail" type="email">
+
+
+              <label>
+                Heading
+                <input
+                  id="homeContentTitle"
+                  type="text"
+                >
               </label>
+
             </div>
 
-            <label>Request A Quote URL
-              <input id="settingQuoteUrl" type="url">
+
+            <label>
+              Description
+
+              <textarea
+                id="homeContentText"
+                rows="3"
+              ></textarea>
+
             </label>
 
-            <label>Top Bar Text
-              <input id="settingTopBarText" type="text">
-            </label>
 
-            <label>Footer Description
-              <textarea id="settingFooterText" rows="3"></textarea>
-            </label>
+            <button
+              class="primary"
+              type="submit"
+            >
+              Save Homepage
+            </button>
 
-            <button class="primary" type="submit">Save Settings</button>
-            <p id="settingsMessage" class="message"></p>
+
+            <p
+              id="homepageMessage"
+              class="message"
+            ></p>
+
           </form>
 
-          <div class="card help-card">
-            <h3>Media</h3>
-            <p>For the current GitHub Pages setup, keep the approved images in <code>assets/</code>. The Blog editor accepts an image URL for each post. Cloud Storage upload can be added later if you enable Firebase Storage.</p>
-          </div>
         </section>
+
+
+
+        <!-- =====================================================
+             SETTINGS
+        ====================================================== -->
+
+        <section
+          id="settingsPanel"
+          class="panel"
+        >
+
+          <div class="panel-heading">
+
+            <div>
+
+              <p class="eyebrow">
+                GLOBAL SETTINGS
+              </p>
+
+              <h2>
+                Site Settings
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <form
+            id="settingsForm"
+            class="card form-card"
+          >
+
+            <div class="two-col">
+
+              <label>
+                Phone
+                <input
+                  id="settingPhone"
+                  type="text"
+                >
+              </label>
+
+
+              <label>
+                Email
+                <input
+                  id="settingEmail"
+                  type="email"
+                >
+              </label>
+
+            </div>
+
+
+            <label>
+              Request A Quote URL
+
+              <input
+                id="settingQuoteUrl"
+                type="url"
+              >
+
+            </label>
+
+
+            <label>
+              Top Bar Text
+
+              <input
+                id="settingTopBarText"
+                type="text"
+              >
+
+            </label>
+
+
+            <label>
+              Footer Description
+
+              <textarea
+                id="settingFooterText"
+                rows="3"
+              ></textarea>
+
+            </label>
+
+
+            <button
+              class="primary"
+              type="submit"
+            >
+              Save Settings
+            </button>
+
+
+            <p
+              id="settingsMessage"
+              class="message"
+            ></p>
+
+          </form>
+
+        </section>
+
       </main>
+
     </div>
+
   </section>
 
-  <script type="module" src="admin.js"></script>
+
+  <script
+    type="module"
+    src="/admin.js"
+  ></script>
+
 </body>
 </html>
