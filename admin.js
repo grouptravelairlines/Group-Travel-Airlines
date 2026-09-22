@@ -15,6 +15,13 @@ const defaultHome = {
   title2: "Plan smarter.",
   heroText: "Your resource for group flight information, travel planning and practical tips for a smooth and successful journey.",
   heroNote: "Get started on our main website.",
+  contentEyebrow: "WHAT YOU'LL FIND",
+
+contentTitle:
+  "Useful travel information, without the clutter.",
+
+contentText:
+  "One clear content hub for group travel planning, tips and answers to common questions.",
   steps: [
     {title:"REQUEST A GROUP QUOTE", text:"Submit the group travel details on our website or contact us directly at 1-888-928-7796."},
     {title:"EXPERT WILL REVIEW THE QUOTE", text:"Our travel expert team will evaluate your details and look for suitable options to accommodate your request."},
