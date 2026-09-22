@@ -122,17 +122,21 @@ function renderHomepageEditor(data){
   $("homeTitle2").value=h.title2||"";
   $("homeHeroText").value=h.heroText||"";
   $("homeHeroNote").value=h.heroNote||"";
+  $("homeContentEyebrow").value =
+  h.contentEyebrow ||
+  "WHAT YOU'LL FIND";
+
+$("homeContentTitle").value =
+  h.contentTitle ||
+  "Useful travel information, without the clutter.";
+
+$("homeContentText").value =
+  h.contentText ||
+  "One clear content hub for group travel planning, tips and answers to common questions.";
   $("stepsEditor").innerHTML=(h.steps||defaultHome.steps).map((s,i)=>`
     <div class="card" style="margin-bottom:12px;padding:16px">
       <label>Step ${i+1} title<input id="stepTitle${i}" value="${escapeAttr(s.title||"")}"></label>
       <label>Step ${i+1} text<textarea id="stepText${i}" rows="3">${escapeHtml(s.text||"")}</textarea></label>
-    </div>
-  `).join("");
-  $("featureEditor").innerHTML=(h.features||defaultHome.features).map((f,i)=>`
-    <div class="card" style="margin-bottom:12px;padding:16px">
-      <label>Card ${i+1} title<input id="featureTitle${i}" value="${escapeAttr(f.title||"")}"></label>
-      <label>Card ${i+1} description<textarea id="featureText${i}" rows="3">${escapeHtml(f.text||"")}</textarea></label>
-      <label>Card ${i+1} image URL<input id="featureImage${i}" value="${escapeAttr(f.image||"")}"></label>
     </div>
   `).join("");
 }
