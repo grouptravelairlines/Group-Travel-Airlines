@@ -18,7 +18,7 @@ import {
 
 
 /* =========================================================
-   BASIC HELPERS
+   HELPERS
 ========================================================= */
 
 const $ = (id) => document.getElementById(id);
@@ -27,6 +27,11 @@ const loginView = $("loginView");
 const adminView = $("adminView");
 const setupNotice = $("setupNotice");
 
+let posts = [];
+let currentPostId = null;
+let slugManuallyChanged = false;
+let quillEditor = null;
+
 
 /* =========================================================
    CLOUDINARY
@@ -34,14 +39,15 @@ const setupNotice = $("setupNotice");
 
 const CLOUDINARY_CLOUD_NAME = "dceou5iz";
 
-const CLOUDINARY_UPLOAD_PRESET = "group_travel_blog_images";
+const CLOUDINARY_UPLOAD_PRESET =
+  "group_travel_blog_images";
 
 const CLOUDINARY_UPLOAD_URL =
   `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
 
 /* =========================================================
-   DEFAULT HOMEPAGE DATA
+   DEFAULT HOMEPAGE
 ========================================================= */
 
 const defaultHome = {
@@ -68,38 +74,33 @@ const defaultHome = {
     "One clear content hub for group travel planning, tips and answers to common questions.",
 
   steps: [
-
     {
       title: "REQUEST A GROUP QUOTE",
       text:
         "Submit the group travel details on our website or contact us directly at 1-888-928-7796."
     },
-
     {
       title: "EXPERT WILL REVIEW THE QUOTE",
       text:
         "Our travel expert team will evaluate your details and look for suitable options to accommodate your request."
     },
-
     {
       title: "WE WILL SEND THE BEST OFFER",
       text:
         "Once we review your requirement, we will provide the best available options for your group within your budget."
     },
-
     {
       title: "FINALIZE THE BOOKING",
       text:
         "You get to accept one of the available offers and follow the instructions. Later, the e-ticket will be delivered to your email address."
     }
-
   ]
 
 };
 
 
 /* =========================================================
-   DEFAULT SITE SETTINGS
+   DEFAULT SETTINGS
 ========================================================= */
 
 const defaultSettings = {
@@ -123,31 +124,27 @@ const defaultSettings = {
 
 
 /* =========================================================
-   STATE
+   MESSAGES
 ========================================================= */
 
-let posts = [];
+function setMessage(
+  id,
+  text,
+  good = false
+) {
 
-let currentPostId = null;
+  const element = $(id);
 
-let slugManuallyChanged = false;
+  if (!element) {
+    return;
+  }
 
+  element.textContent = text;
 
-/* =========================================================
-   MESSAGE
-========================================================= */
-
-function setMessage(id, text, good = false) {
-
-  const el = $(id);
-
-  if (!el) return;
-
-  el.textContent = text;
-
-  el.style.color = good
-    ? "#1f8f58"
-    : "";
+  element.style.color =
+    good
+      ? "#1f8f58"
+      : "";
 
 }
 
@@ -158,7 +155,7 @@ function setMessage(id, text, good = false) {
 
 function slugify(text) {
 
-  return (text || "")
+  return String(text || "")
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s-]/g, "")
@@ -174,20 +171,27 @@ function slugify(text) {
 
 function formatDate(value) {
 
-  if (!value) return "";
-
-  if (typeof value.toDate === "function") {
-
-    return value.toDate().toLocaleDateString();
-
+  if (!value) {
+    return "";
   }
 
-  const date = new Date(value);
+  if (
+    typeof value.toDate === "function"
+  ) {
+    return value
+      .toDate()
+      .toLocaleDateString();
+  }
 
-  if (Number.isNaN(date.getTime())) {
+  const date =
+    new Date(value);
 
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
     return "";
-
   }
 
   return date.toLocaleDateString();
@@ -202,18 +206,20 @@ function formatDate(value) {
 async function isAdminUser(user) {
 
   if (!user || !db) {
-
     return false;
-
   }
 
-  const ref =
-    doc(db, "admins", user.uid);
+  const adminRef =
+    doc(
+      db,
+      "admins",
+      user.uid
+    );
 
-  const snap =
-    await getDoc(ref);
+  const snapshot =
+    await getDoc(adminRef);
 
-  return snap.exists();
+  return snapshot.exists();
 
 }
 
@@ -227,25 +233,203 @@ function openPanel(id) {
   document
     .querySelectorAll(".panel")
     .forEach(panel => {
-      panel.classList.remove("active");
+      panel.classList.remove(
+        "active"
+      );
     });
 
 
   document
     .querySelectorAll(".side-link")
     .forEach(button => {
-      button.classList.remove("active");
+      button.classList.remove(
+        "active"
+      );
     });
 
 
-  $(id)?.classList.add("active");
+  $(id)?.classList.add(
+    "active"
+  );
 
 
   document
     .querySelector(
       `.side-link[data-panel="${id}"]`
     )
-    ?.classList.add("active");
+    ?.classList.add(
+      "active"
+    );
+
+}
+
+
+/* =========================================================
+   QUILL RICH TEXT EDITOR
+========================================================= */
+
+function initializeRichEditor() {
+
+  if (
+    typeof window.Quill === "undefined"
+  ) {
+
+    setMessage(
+      "postMessage",
+      "Rich text editor could not be loaded."
+    );
+
+    return;
+
+  }
+
+
+  const editorElement =
+    $("postContentEditor");
+
+  if (!editorElement) {
+    return;
+  }
+
+
+  quillEditor =
+    new window.Quill(
+      editorElement,
+      {
+        theme: "snow",
+
+        placeholder:
+          "Write your article here...",
+
+        modules: {
+
+          toolbar: [
+            [
+              {
+                header: [2, 3, false]
+              }
+            ],
+
+            [
+              "bold",
+              "italic",
+              "underline",
+              "strike"
+            ],
+
+            [
+              {
+                list: "ordered"
+              },
+              {
+                list: "bullet"
+              }
+            ],
+
+            [
+              "blockquote"
+            ],
+
+            [
+              "link"
+            ],
+
+            [
+              {
+                align: []
+              }
+            ],
+
+            [
+              "clean"
+            ]
+          ]
+
+        }
+
+      }
+    );
+
+
+  quillEditor.on(
+    "text-change",
+    () => {
+
+      syncRichTextFields();
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   RICH TEXT → FIRESTORE FIELDS
+========================================================= */
+
+function syncRichTextFields() {
+
+  if (!quillEditor) {
+    return;
+  }
+
+
+  const html =
+    quillEditor.root.innerHTML;
+
+
+  const text =
+    quillEditor
+      .getText()
+      .replace(/\s+/g, " ")
+      .trim();
+
+
+  $("postContent").value =
+    text
+      ? html
+      : "";
+
+
+  const generatedExcerpt =
+    createExcerpt(text);
+
+
+  $("postExcerpt").value =
+    generatedExcerpt;
+
+}
+
+
+/* =========================================================
+   AUTOMATIC EXCERPT
+========================================================= */
+
+function createExcerpt(
+  text,
+  length = 180
+) {
+
+  const clean =
+    String(text || "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+
+  if (
+    clean.length <= length
+  ) {
+    return clean;
+  }
+
+
+  return (
+    clean
+      .slice(0, length)
+      .replace(/\s+\S*$/, "")
+      .trim() +
+    "…"
+  );
 
 }
 
@@ -256,14 +440,17 @@ function openPanel(id) {
 
 async function loadPosts() {
 
-  const snap =
+  const snapshot =
     await getDocs(
-      collection(db, "posts")
+      collection(
+        db,
+        "posts"
+      )
     );
 
 
   posts =
-    snap.docs.map(
+    snapshot.docs.map(
       document => ({
         id: document.id,
         ...document.data()
@@ -271,21 +458,23 @@ async function loadPosts() {
     );
 
 
-  posts.sort((a, b) => {
+  posts.sort(
+    (a, b) => {
 
-    const aa =
-      a.updatedAt?.seconds ||
-      a.createdAt?.seconds ||
-      0;
+      const aTime =
+        a.updatedAt?.seconds ||
+        a.createdAt?.seconds ||
+        0;
 
-    const bb =
-      b.updatedAt?.seconds ||
-      b.createdAt?.seconds ||
-      0;
+      const bTime =
+        b.updatedAt?.seconds ||
+        b.createdAt?.seconds ||
+        0;
 
-    return bb - aa;
+      return bTime - aTime;
 
-  });
+    }
+  );
 
 
   renderPostList();
@@ -296,14 +485,15 @@ async function loadPosts() {
 
 
 /* =========================================================
-   DASHBOARD STATS
+   DASHBOARD
 ========================================================= */
 
 function renderStats() {
 
   const published =
     posts.filter(
-      post => post.published
+      post =>
+        post.published === true
     ).length;
 
 
@@ -320,36 +510,45 @@ function renderStats() {
 
 
   $("recentPosts").innerHTML =
-    posts.slice(0, 5).map(post => `
+    posts
+      .slice(0, 5)
+      .map(
+        post => `
 
-      <div
-        class="post-row"
-        data-id="${post.id}"
-      >
+          <div
+            class="post-row"
+            data-id="${post.id}"
+          >
 
-        <strong>
-          ${escapeHtml(
-            post.title || "Untitled"
-          )}
-        </strong>
+            <strong>
+              ${escapeHtml(
+                post.title ||
+                "Untitled"
+              )}
+            </strong>
 
-        <span>
-          ${post.published
-            ? "Published"
-            : "Draft"
-          }
+            <span>
+              ${
+                post.published
+                  ? "Published"
+                  : "Draft"
+              }
 
-          ${
-            post.updatedAt
-              ? " · " + formatDate(post.updatedAt)
-              : ""
-          }
+              ${
+                post.updatedAt
+                  ? " · " +
+                    formatDate(
+                      post.updatedAt
+                    )
+                  : ""
+              }
+            </span>
 
-        </span>
+          </div>
 
-      </div>
-
-    `).join("")
+        `
+      )
+      .join("")
 
     ||
 
@@ -366,7 +565,9 @@ function renderStats() {
         "click",
         () => {
 
-          openPanel("postsPanel");
+          openPanel(
+            "postsPanel"
+          );
 
           loadPostIntoEditor(
             row.dataset.id
@@ -387,37 +588,37 @@ function renderStats() {
 function renderPostList() {
 
   $("postList").innerHTML =
+    posts
+      .map(
+        post => `
 
-    posts.map(post => `
+          <div
+            class="post-row"
+            data-id="${post.id}"
+          >
 
-      <div
-        class="post-row"
-        data-id="${post.id}"
-      >
+            <strong>
+              ${escapeHtml(
+                post.title ||
+                "Untitled"
+              )}
+            </strong>
 
-        <strong>
-          ${escapeHtml(
-            post.title || "Untitled"
-          )}
-        </strong>
+            <span>
+              Travel Blog
+              ·
+              ${
+                post.published
+                  ? "Published"
+                  : "Draft"
+              }
+            </span>
 
-        <span>
+          </div>
 
-          Travel Blog
-
-          ·
-
-          ${
-            post.published
-              ? "Published"
-              : "Draft"
-          }
-
-        </span>
-
-      </div>
-
-    `).join("")
+        `
+      )
+      .join("")
 
     ||
 
@@ -442,293 +643,6 @@ function renderPostList() {
       );
 
     });
-
-}
-
-
-/* =========================================================
-   HOMEPAGE EDITOR
-========================================================= */
-
-function renderHomepageEditor(data) {
-
-  const home = {
-    ...defaultHome,
-    ...data
-  };
-
-
-  $("homeEyebrow").value =
-    home.eyebrow || "";
-
-
-  $("homeTitle1").value =
-    home.title1 || "";
-
-
-  $("homeTitle2").value =
-    home.title2 || "";
-
-
-  $("homeHeroText").value =
-    home.heroText || "";
-
-
-  $("homeHeroNote").value =
-    home.heroNote || "";
-
-
-  $("homeContentEyebrow").value =
-    home.contentEyebrow ||
-    defaultHome.contentEyebrow;
-
-
-  $("homeContentTitle").value =
-    home.contentTitle ||
-    defaultHome.contentTitle;
-
-
-  $("homeContentText").value =
-    home.contentText ||
-    defaultHome.contentText;
-
-
-  $("stepsEditor").innerHTML =
-    (home.steps || defaultHome.steps)
-      .map((step, index) => `
-
-        <div
-          class="card"
-          style="margin-bottom:12px;padding:16px"
-        >
-
-          <label>
-
-            Step ${index + 1} title
-
-            <input
-              id="stepTitle${index}"
-              value="${escapeAttr(
-                step.title || ""
-              )}"
-            >
-
-          </label>
-
-
-          <label>
-
-            Step ${index + 1} text
-
-            <textarea
-              id="stepText${index}"
-              rows="3"
-            >${escapeHtml(
-              step.text || ""
-            )}</textarea>
-
-          </label>
-
-        </div>
-
-      `)
-      .join("");
-
-}
-
-
-/* =========================================================
-   LOAD HOMEPAGE
-========================================================= */
-
-async function loadHomepage() {
-
-  const snap =
-    await getDoc(
-      doc(
-        db,
-        "siteSettings",
-        "home"
-      )
-    );
-
-
-  renderHomepageEditor(
-    snap.exists()
-      ? snap.data()
-      : defaultHome
-  );
-
-}
-
-
-/* =========================================================
-   LOAD SITE SETTINGS
-========================================================= */
-
-async function loadSettings() {
-
-  const snap =
-    await getDoc(
-      doc(
-        db,
-        "siteSettings",
-        "global"
-      )
-    );
-
-
-  const settings =
-    snap.exists()
-      ? snap.data()
-      : defaultSettings;
-
-
-  $("settingPhone").value =
-    settings.phone || "";
-
-
-  $("settingEmail").value =
-    settings.email || "";
-
-
-  $("settingQuoteUrl").value =
-    settings.quoteUrl || "";
-
-
-  $("settingTopBarText").value =
-    settings.topBarText || "";
-
-
-  $("settingFooterText").value =
-    settings.footerText || "";
-
-}
-
-
-/* =========================================================
-   IMAGE PREVIEW
-========================================================= */
-
-function updatePostImagePreview(url = null) {
-
-  const imageUrlInput =
-    $("postImageUrl");
-
-  const preview =
-    $("postImagePreview");
-
-  const emptyState =
-    $("postImagePreviewEmpty");
-
-  const removeButton =
-    $("removeImageButton");
-
-
-  if (!imageUrlInput || !preview) {
-
-    return;
-
-  }
-
-
-  const source =
-    url !== null
-      ? url.trim()
-      : imageUrlInput.value.trim();
-
-
-  if (!source) {
-
-    preview.src = "";
-
-    preview.classList.add(
-      "hidden"
-    );
-
-    emptyState?.classList.remove(
-      "hidden"
-    );
-
-    removeButton?.classList.add(
-      "hidden"
-    );
-
-    return;
-
-  }
-
-
-  preview.src = source;
-
-
-  preview.onload = () => {
-
-    preview.classList.remove(
-      "hidden"
-    );
-
-    emptyState?.classList.add(
-      "hidden"
-    );
-
-    removeButton?.classList.remove(
-      "hidden"
-    );
-
-  };
-
-
-  preview.onerror = () => {
-
-    preview.src = "";
-
-    preview.classList.add(
-      "hidden"
-    );
-
-    emptyState?.classList.remove(
-      "hidden"
-    );
-
-    removeButton?.classList.add(
-      "hidden"
-    );
-
-    setUploadStatus(
-      "The image URL could not be loaded.",
-      false
-    );
-
-  };
-
-}
-
-
-/* =========================================================
-   IMAGE STATUS
-========================================================= */
-
-function setUploadStatus(
-  message,
-  good = false
-) {
-
-  const status =
-    $("imageUploadStatus");
-
-
-  if (!status) return;
-
-
-  status.textContent =
-    message || "";
-
-
-  status.style.color =
-    good
-      ? "#1f8f58"
-      : "";
 
 }
 
@@ -767,19 +681,39 @@ function newPost() {
     "Save as draft";
 
 
-  $("postCategory") &&
-    ($("postCategory").value =
-      "Travel Blog");
-
-
   $("postImageUrl").value =
     "";
 
 
-  updatePostImagePreview("");
+  $("postImageAlt").value =
+    "";
 
 
-  setUploadStatus("");
+  $("postContent").value =
+    "";
+
+
+  $("postExcerpt").value =
+    "";
+
+
+  if (quillEditor) {
+
+    quillEditor.setText(
+      ""
+    );
+
+  }
+
+
+  updatePostImagePreview(
+    ""
+  );
+
+
+  setUploadStatus(
+    ""
+  );
 
 
   setMessage(
@@ -791,22 +725,24 @@ function newPost() {
 
 
 /* =========================================================
-   LOAD POST INTO EDITOR
+   LOAD POST
 ========================================================= */
 
 function loadPostIntoEditor(id) {
 
   const post =
     posts.find(
-      item => item.id === id
+      item =>
+        item.id === id
     );
 
 
-  if (!post) return;
+  if (!post) {
+    return;
+  }
 
 
-  currentPostId =
-    id;
+  currentPostId = id;
 
 
   slugManuallyChanged =
@@ -818,31 +754,36 @@ function loadPostIntoEditor(id) {
 
 
   $("postSlug").value =
-    post.slug || slugify(post.title);
+    post.slug ||
+    slugify(
+      post.title
+    );
 
 
   $("postFocusKeyphrase").value =
-    post.focusKeyphrase || "";
+    post.focusKeyphrase ||
+    "";
 
 
   $("postSeoTitle").value =
-    post.seoTitle || post.title || "";
+    post.seoTitle ||
+    post.title ||
+    "";
 
 
   $("postMetaDescription").value =
-    post.metaDescription || "";
-
-
-  $("postExcerpt").value =
-    post.excerpt || "";
-
-
-  $("postContent").value =
-    post.content || "";
+    post.metaDescription ||
+    "";
 
 
   $("postImageUrl").value =
-    post.imageUrl || "";
+    post.imageUrl ||
+    "";
+
+
+  $("postImageAlt").value =
+    post.imageAlt ||
+    "";
 
 
   $("postPublished").checked =
@@ -874,12 +815,35 @@ function loadPostIntoEditor(id) {
       : "Save as draft";
 
 
+  if (quillEditor) {
+
+    quillEditor.setText(
+      ""
+    );
+
+
+    if (post.content) {
+
+      quillEditor.clipboard.dangerouslyPasteHTML(
+        post.content
+      );
+
+    }
+
+  }
+
+
+  syncRichTextFields();
+
+
   updatePostImagePreview(
     post.imageUrl || ""
   );
 
 
-  setUploadStatus("");
+  setUploadStatus(
+    ""
+  );
 
 
   setMessage(
@@ -898,8 +862,13 @@ async function savePost(
   publishedValue
 ) {
 
+  syncRichTextFields();
+
+
   const title =
-    $("postTitle").value.trim();
+    $("postTitle")
+      .value
+      .trim();
 
 
   if (!title) {
@@ -917,7 +886,9 @@ async function savePost(
 
 
   const slug =
-    $("postSlug").value.trim() ||
+    $("postSlug")
+      .value
+      .trim() ||
     slugify(title);
 
 
@@ -933,17 +904,48 @@ async function savePost(
   }
 
 
+  const content =
+    $("postContent")
+      .value
+      .trim();
+
+
+  if (!content) {
+
+    setMessage(
+      "postMessage",
+      "Please write some article content."
+    );
+
+    return;
+
+  }
+
+
   const published =
-    publishedValue;
+    publishedValue === true;
 
 
   const previousPost =
     currentPostId
       ? posts.find(
           post =>
-            post.id === currentPostId
+            post.id ===
+            currentPostId
         )
       : null;
+
+
+  const excerpt =
+    $("postExcerpt")
+      .value
+      .trim();
+
+
+  const metaDescription =
+    $("postMetaDescription")
+      .value
+      .trim();
 
 
   const payload = {
@@ -965,14 +967,14 @@ async function savePost(
         .value
         .trim(),
 
-    excerpt:
-      $("postExcerpt")
+    imageAlt:
+      $("postImageAlt")
         .value
         .trim(),
 
-    content:
-      $("postContent")
-        .value,
+    excerpt,
+
+    content,
 
     seoTitle:
       $("postSeoTitle")
@@ -981,12 +983,8 @@ async function savePost(
       title,
 
     metaDescription:
-      $("postMetaDescription")
-        .value
-        .trim() ||
-      $("postExcerpt")
-        .value
-        .trim(),
+      metaDescription ||
+      excerpt,
 
     published,
 
@@ -1034,7 +1032,7 @@ async function savePost(
       }
 
 
-      const newReference =
+      const reference =
         await addDoc(
           collection(
             db,
@@ -1045,7 +1043,7 @@ async function savePost(
 
 
       currentPostId =
-        newReference.id;
+        reference.id;
 
     }
 
@@ -1070,7 +1068,6 @@ async function savePost(
 
     }
 
-
   } catch (error) {
 
     console.error(
@@ -1091,208 +1088,166 @@ async function savePost(
 
 
 /* =========================================================
-   HOMEPAGE SAVE
+   IMAGE PREVIEW
 ========================================================= */
 
-async function handleHomepageSave(
-  event
+function updatePostImagePreview(
+  url = null
 ) {
 
-  event.preventDefault();
+  const imageUrlInput =
+    $("postImageUrl");
+
+  const altInput =
+    $("postImageAlt");
+
+  const preview =
+    $("postImagePreview");
+
+  const emptyState =
+    $("postImagePreviewEmpty");
+
+  const removeButton =
+    $("removeImageButton");
 
 
-  const steps =
-    [0, 1, 2, 3].map(
-      index => ({
+  if (
+    !imageUrlInput ||
+    !preview
+  ) {
 
-        title:
-          $(
-            `stepTitle${index}`
-          ).value.trim(),
+    return;
 
-        text:
-          $(
-            `stepText${index}`
-          ).value.trim()
+  }
 
-      })
+
+  const source =
+    url !== null
+      ? String(url).trim()
+      : imageUrlInput.value.trim();
+
+
+  if (!source) {
+
+    preview.src = "";
+
+    preview.alt =
+      "Featured image preview";
+
+    preview.classList.add(
+      "hidden"
     );
 
+    emptyState?.classList.remove(
+      "hidden"
+    );
 
-  const data = {
+    removeButton?.classList.add(
+      "hidden"
+    );
 
-    eyebrow:
-      $("homeEyebrow")
-        .value
-        .trim(),
+    return;
 
-    title1:
-      $("homeTitle1")
-        .value
-        .trim(),
+  }
 
-    title2:
-      $("homeTitle2")
-        .value
-        .trim(),
 
-    heroText:
-      $("homeHeroText")
-        .value
-        .trim(),
+  preview.src = source;
 
-    heroNote:
-      $("homeHeroNote")
-        .value
-        .trim(),
+  preview.alt =
+    altInput?.value.trim() ||
+    "Featured image";
 
-    contentEyebrow:
-      $("homeContentEyebrow")
-        .value
-        .trim(),
 
-    contentTitle:
-      $("homeContentTitle")
-        .value
-        .trim(),
+  preview.onload = () => {
 
-    contentText:
-      $("homeContentText")
-        .value
-        .trim(),
+    preview.classList.remove(
+      "hidden"
+    );
 
-    steps,
+    emptyState?.classList.add(
+      "hidden"
+    );
 
-    updatedAt:
-      serverTimestamp()
+    removeButton?.classList.remove(
+      "hidden"
+    );
 
   };
 
 
-  try {
+  preview.onerror = () => {
 
-    await setDoc(
-      doc(
-        db,
-        "siteSettings",
-        "home"
-      ),
-      data,
-      { merge: true }
+    preview.src = "";
+
+    preview.classList.add(
+      "hidden"
     );
 
-
-    setMessage(
-      "homepageMessage",
-      "Homepage saved successfully.",
-      true
+    emptyState?.classList.remove(
+      "hidden"
     );
 
-  } catch (error) {
-
-    setMessage(
-      "homepageMessage",
-      error.message ||
-      "Unable to save homepage."
+    removeButton?.classList.add(
+      "hidden"
     );
 
-  }
+    setUploadStatus(
+      "The image URL could not be loaded."
+    );
+
+  };
 
 }
 
 
 /* =========================================================
-   SETTINGS SAVE
+   UPLOAD STATUS
 ========================================================= */
 
-async function handleSettingsSave(
-  event
+function setUploadStatus(
+  message,
+  good = false
 ) {
 
-  event.preventDefault();
+  const status =
+    $("imageUploadStatus");
 
-
-  const data = {
-
-    phone:
-      $("settingPhone")
-        .value
-        .trim(),
-
-    email:
-      $("settingEmail")
-        .value
-        .trim(),
-
-    quoteUrl:
-      $("settingQuoteUrl")
-        .value
-        .trim(),
-
-    topBarText:
-      $("settingTopBarText")
-        .value
-        .trim(),
-
-    footerText:
-      $("settingFooterText")
-        .value
-        .trim(),
-
-    updatedAt:
-      serverTimestamp()
-
-  };
-
-
-  try {
-
-    await setDoc(
-      doc(
-        db,
-        "siteSettings",
-        "global"
-      ),
-      data,
-      { merge: true }
-    );
-
-
-    setMessage(
-      "settingsMessage",
-      "Site settings saved successfully.",
-      true
-    );
-
-  } catch (error) {
-
-    setMessage(
-      "settingsMessage",
-      error.message ||
-      "Unable to save settings."
-    );
-
+  if (!status) {
+    return;
   }
+
+  status.textContent =
+    message || "";
+
+  status.style.color =
+    good
+      ? "#1f8f58"
+      : "";
 
 }
 
 
 /* =========================================================
-   CLOUDINARY IMAGE UPLOAD
+   CLOUDINARY UPLOAD
 ========================================================= */
 
 async function uploadFeaturedImage(
   file
 ) {
 
-  if (!file) return;
+  if (!file) {
+    return;
+  }
 
 
-  if (!file.type.startsWith("image/")) {
+  if (
+    !file.type.startsWith(
+      "image/"
+    )
+  ) {
 
     setUploadStatus(
-      "Please select an image file.",
-      false
+      "Please select an image file."
     );
 
     return;
@@ -1307,8 +1262,7 @@ async function uploadFeaturedImage(
   if (file.size > maxSize) {
 
     setUploadStatus(
-      "Please choose an image smaller than 10 MB.",
-      false
+      "Please choose an image smaller than 10 MB."
     );
 
     return;
@@ -1413,8 +1367,7 @@ async function uploadFeaturedImage(
 
     setUploadStatus(
       error.message ||
-      "Image upload failed.",
-      false
+      "Image upload failed."
     );
 
   } finally {
@@ -1422,10 +1375,8 @@ async function uploadFeaturedImage(
     uploadButton.disabled =
       false;
 
-
     uploadButton.textContent =
       "Upload Image";
-
 
     $("postImageFile").value =
       "";
@@ -1436,16 +1387,398 @@ async function uploadFeaturedImage(
 
 
 /* =========================================================
-   UI BINDING
+   PUBLISH SUMMARY
+========================================================= */
+
+function updatePublishSummary() {
+
+  const checkbox =
+    $("postPublished");
+
+  const summary =
+    $("publishSummary");
+
+
+  if (
+    !checkbox ||
+    !summary
+  ) {
+    return;
+  }
+
+
+  summary.textContent =
+    checkbox.checked
+      ? "This post will be published"
+      : "Save as draft";
+
+}
+
+
+/* =========================================================
+   HOMEPAGE
+========================================================= */
+
+function renderHomepageEditor(
+  data
+) {
+
+  const home = {
+    ...defaultHome,
+    ...data
+  };
+
+
+  $("homeEyebrow").value =
+    home.eyebrow || "";
+
+
+  $("homeTitle1").value =
+    home.title1 || "";
+
+
+  $("homeTitle2").value =
+    home.title2 || "";
+
+
+  $("homeHeroText").value =
+    home.heroText || "";
+
+
+  $("homeHeroNote").value =
+    home.heroNote || "";
+
+
+  $("homeContentEyebrow").value =
+    home.contentEyebrow ||
+    defaultHome.contentEyebrow;
+
+
+  $("homeContentTitle").value =
+    home.contentTitle ||
+    defaultHome.contentTitle;
+
+
+  $("homeContentText").value =
+    home.contentText ||
+    defaultHome.contentText;
+
+
+  $("stepsEditor").innerHTML =
+    (
+      home.steps ||
+      defaultHome.steps
+    )
+      .map(
+        (step, index) => `
+
+          <div
+            class="card"
+            style="margin-bottom:12px;padding:16px"
+          >
+
+            <label>
+
+              Step ${index + 1} title
+
+              <input
+                id="stepTitle${index}"
+                value="${escapeAttr(
+                  step.title ||
+                  ""
+                )}"
+              >
+
+            </label>
+
+
+            <label>
+
+              Step ${index + 1} text
+
+              <textarea
+                id="stepText${index}"
+                rows="3"
+              >${escapeHtml(
+                step.text ||
+                ""
+              )}</textarea>
+
+            </label>
+
+          </div>
+
+        `
+      )
+      .join("");
+
+}
+
+
+async function loadHomepage() {
+
+  const snapshot =
+    await getDoc(
+      doc(
+        db,
+        "siteSettings",
+        "home"
+      )
+    );
+
+
+  renderHomepageEditor(
+    snapshot.exists()
+      ? snapshot.data()
+      : defaultHome
+  );
+
+}
+
+
+async function handleHomepageSave(
+  event
+) {
+
+  event.preventDefault();
+
+
+  const steps =
+    [0, 1, 2, 3]
+      .map(
+        index => ({
+
+          title:
+            $(
+              `stepTitle${index}`
+            )
+              .value
+              .trim(),
+
+          text:
+            $(
+              `stepText${index}`
+            )
+              .value
+              .trim()
+
+        })
+      );
+
+
+  const data = {
+
+    eyebrow:
+      $("homeEyebrow")
+        .value
+        .trim(),
+
+    title1:
+      $("homeTitle1")
+        .value
+        .trim(),
+
+    title2:
+      $("homeTitle2")
+        .value
+        .trim(),
+
+    heroText:
+      $("homeHeroText")
+        .value
+        .trim(),
+
+    heroNote:
+      $("homeHeroNote")
+        .value
+        .trim(),
+
+    contentEyebrow:
+      $("homeContentEyebrow")
+        .value
+        .trim(),
+
+    contentTitle:
+      $("homeContentTitle")
+        .value
+        .trim(),
+
+    contentText:
+      $("homeContentText")
+        .value
+        .trim(),
+
+    steps,
+
+    updatedAt:
+      serverTimestamp()
+
+  };
+
+
+  try {
+
+    await setDoc(
+      doc(
+        db,
+        "siteSettings",
+        "home"
+      ),
+      data,
+      {
+        merge: true
+      }
+    );
+
+
+    setMessage(
+      "homepageMessage",
+      "Homepage saved successfully.",
+      true
+    );
+
+  } catch (error) {
+
+    setMessage(
+      "homepageMessage",
+      error.message ||
+      "Unable to save homepage."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   SITE SETTINGS
+========================================================= */
+
+async function loadSettings() {
+
+  const snapshot =
+    await getDoc(
+      doc(
+        db,
+        "siteSettings",
+        "global"
+      )
+    );
+
+
+  const settings =
+    snapshot.exists()
+      ? snapshot.data()
+      : defaultSettings;
+
+
+  $("settingPhone").value =
+    settings.phone || "";
+
+
+  $("settingEmail").value =
+    settings.email || "";
+
+
+  $("settingQuoteUrl").value =
+    settings.quoteUrl || "";
+
+
+  $("settingTopBarText").value =
+    settings.topBarText || "";
+
+
+  $("settingFooterText").value =
+    settings.footerText || "";
+
+}
+
+
+async function handleSettingsSave(
+  event
+) {
+
+  event.preventDefault();
+
+
+  const data = {
+
+    phone:
+      $("settingPhone")
+        .value
+        .trim(),
+
+    email:
+      $("settingEmail")
+        .value
+        .trim(),
+
+    quoteUrl:
+      $("settingQuoteUrl")
+        .value
+        .trim(),
+
+    topBarText:
+      $("settingTopBarText")
+        .value
+        .trim(),
+
+    footerText:
+      $("settingFooterText")
+        .value
+        .trim(),
+
+    updatedAt:
+      serverTimestamp()
+
+  };
+
+
+  try {
+
+    await setDoc(
+      doc(
+        db,
+        "siteSettings",
+        "global"
+      ),
+      data,
+      {
+        merge: true
+      }
+    );
+
+
+    setMessage(
+      "settingsMessage",
+      "Site settings saved successfully.",
+      true
+    );
+
+  } catch (error) {
+
+    setMessage(
+      "settingsMessage",
+      error.message ||
+      "Unable to save settings."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   UI
 ========================================================= */
 
 function bindUI() {
 
 
-  /* SIDEBAR */
-
   document
-    .querySelectorAll(".side-link")
+    .querySelectorAll(
+      ".side-link"
+    )
     .forEach(button => {
 
       button.addEventListener(
@@ -1462,17 +1795,19 @@ function bindUI() {
     });
 
 
-  /* DASHBOARD NEW POST */
-
   document
-    .querySelectorAll("[data-open-posts]")
+    .querySelectorAll(
+      "[data-open-posts]"
+    )
     .forEach(button => {
 
       button.addEventListener(
         "click",
         () => {
 
-          openPanel("postsPanel");
+          openPanel(
+            "postsPanel"
+          );
 
           newPost();
 
@@ -1482,16 +1817,12 @@ function bindUI() {
     });
 
 
-  /* NEW POST */
-
   $("newPostButton")
     ?.addEventListener(
       "click",
       newPost
     );
 
-
-  /* FORM SUBMIT */
 
   $("postForm")
     ?.addEventListener(
@@ -1501,22 +1832,21 @@ function bindUI() {
         event.preventDefault();
 
         savePost(
-          $("postPublished").checked
+          $("postPublished")
+            .checked
         );
 
       }
     );
 
 
-  /* SAVE DRAFT */
-
   $("saveDraftButton")
     ?.addEventListener(
       "click",
       () => {
 
-        $("postPublished").checked =
-          false;
+        $("postPublished")
+          .checked = false;
 
         updatePublishSummary();
 
@@ -1526,15 +1856,13 @@ function bindUI() {
     );
 
 
-  /* PUBLISH */
-
   $("publishPostButton")
     ?.addEventListener(
       "click",
       () => {
 
-        $("postPublished").checked =
-          true;
+        $("postPublished")
+          .checked = true;
 
         updatePublishSummary();
 
@@ -1544,16 +1872,12 @@ function bindUI() {
     );
 
 
-  /* PUBLISH CHECKBOX */
-
   $("postPublished")
     ?.addEventListener(
       "change",
       updatePublishSummary
     );
 
-
-  /* TITLE → SLUG */
 
   $("postTitle")
     ?.addEventListener(
@@ -1566,7 +1890,8 @@ function bindUI() {
 
           $("postSlug").value =
             slugify(
-              $("postTitle").value
+              $("postTitle")
+                .value
             );
 
         }
@@ -1574,8 +1899,6 @@ function bindUI() {
       }
     );
 
-
-  /* MANUAL SLUG */
 
   $("postSlug")
     ?.addEventListener(
@@ -1589,8 +1912,6 @@ function bindUI() {
     );
 
 
-  /* IMAGE URL LIVE PREVIEW */
-
   $("postImageUrl")
     ?.addEventListener(
       "input",
@@ -1602,7 +1923,27 @@ function bindUI() {
     );
 
 
-  /* USE IMAGE URL */
+  $("postImageAlt")
+    ?.addEventListener(
+      "input",
+      () => {
+
+        if (
+          $("postImagePreview")
+        ) {
+
+          $("postImagePreview")
+            .alt =
+              $("postImageAlt")
+                .value
+                .trim() ||
+              "Featured image";
+
+        }
+
+      }
+    );
+
 
   $("useImageUrlButton")
     ?.addEventListener(
@@ -1615,8 +1956,6 @@ function bindUI() {
     );
 
 
-  /* REMOVE IMAGE */
-
   $("removeImageButton")
     ?.addEventListener(
       "click",
@@ -1625,15 +1964,20 @@ function bindUI() {
         $("postImageUrl").value =
           "";
 
-        updatePostImagePreview("");
+        $("postImageAlt").value =
+          "";
 
-        setUploadStatus("");
+        updatePostImagePreview(
+          ""
+        );
+
+        setUploadStatus(
+          ""
+        );
 
       }
     );
 
-
-  /* SELECT IMAGE */
 
   $("uploadImageButton")
     ?.addEventListener(
@@ -1646,8 +1990,6 @@ function bindUI() {
       }
     );
 
-
-  /* IMAGE FILE */
 
   $("postImageFile")
     ?.addEventListener(
@@ -1670,16 +2012,12 @@ function bindUI() {
     );
 
 
-  /* HOMEPAGE */
-
   $("homepageForm")
     ?.addEventListener(
       "submit",
       handleHomepageSave
     );
 
-
-  /* SETTINGS */
 
   $("settingsForm")
     ?.addEventListener(
@@ -1688,20 +2026,18 @@ function bindUI() {
     );
 
 
-  /* LOGOUT */
-
   $("logoutButton")
     ?.addEventListener(
       "click",
       () => {
 
-        signOut(auth);
+        signOut(
+          auth
+        );
 
       }
     );
 
-
-  /* LOGIN */
 
   $("loginForm")
     ?.addEventListener(
@@ -1713,10 +2049,12 @@ function bindUI() {
 
         if (!isConfigured) {
 
-          return setMessage(
+          setMessage(
             "loginMessage",
             "Firebase is not configured yet."
           );
+
+          return;
 
         }
 
@@ -1750,8 +2088,6 @@ function bindUI() {
     );
 
 
-  /* PASSWORD RESET */
-
   $("resetPassword")
     ?.addEventListener(
       "click",
@@ -1759,10 +2095,12 @@ function bindUI() {
 
         if (!isConfigured) {
 
-          return setMessage(
+          setMessage(
             "loginMessage",
             "Firebase is not configured yet."
           );
+
+          return;
 
         }
 
@@ -1775,10 +2113,12 @@ function bindUI() {
 
         if (!email) {
 
-          return setMessage(
+          setMessage(
             "loginMessage",
             "Enter your email first."
           );
+
+          return;
 
         }
 
@@ -1814,41 +2154,16 @@ function bindUI() {
 
 
 /* =========================================================
-   PUBLISHING SUMMARY
+   ESCAPE
 ========================================================= */
 
-function updatePublishSummary() {
+function escapeHtml(
+  value
+) {
 
-  const checkbox =
-    $("postPublished");
-
-
-  const summary =
-    $("publishSummary");
-
-
-  if (!checkbox || !summary) {
-
-    return;
-
-  }
-
-
-  summary.textContent =
-    checkbox.checked
-      ? "This post will be published"
-      : "Save as draft";
-
-}
-
-
-/* =========================================================
-   ESCAPE HTML
-========================================================= */
-
-function escapeHtml(value) {
-
-  return String(value || "")
+  return String(
+    value || ""
+  )
     .replace(
       /[&<>"']/g,
       character => ({
@@ -1863,7 +2178,9 @@ function escapeHtml(value) {
 }
 
 
-function escapeAttr(value) {
+function escapeAttr(
+  value
+) {
 
   return escapeHtml(
     value
@@ -1873,8 +2190,11 @@ function escapeAttr(value) {
 
 
 /* =========================================================
-   START APPLICATION
+   START
 ========================================================= */
+
+bindUI();
+
 
 if (!isConfigured) {
 
@@ -1886,13 +2206,7 @@ if (!isConfigured) {
   setupNotice.textContent =
     "Firebase is not configured. Open firebase-config.js and add your Firebase Web App configuration.";
 
-
-  bindUI();
-
 } else {
-
-  bindUI();
-
 
   onAuthStateChanged(
     auth,
@@ -1928,10 +2242,12 @@ if (!isConfigured) {
           );
 
 
-          return setMessage(
+          setMessage(
             "loginMessage",
             "This account is not authorized as an administrator."
           );
+
+          return;
 
         }
 
@@ -1940,14 +2256,17 @@ if (!isConfigured) {
           "hidden"
         );
 
-
         adminView.classList.remove(
           "hidden"
         );
 
 
-        $("currentEmail").textContent =
-          user.email || "";
+        $("currentEmail")
+          .textContent =
+            user.email || "";
+
+
+        initializeRichEditor();
 
 
         await Promise.all([
@@ -1970,7 +2289,6 @@ if (!isConfigured) {
         adminView.classList.add(
           "hidden"
         );
-
 
         loginView.classList.remove(
           "hidden"
