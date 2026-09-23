@@ -270,9 +270,7 @@ function openPanel(id) {
 
 function initializeRichEditor() {
 
-  if (
-    typeof window.Quill === "undefined"
-  ) {
+  if (typeof window.Quill === "undefined") {
 
     setMessage(
       "postMessage",
@@ -280,9 +278,7 @@ function initializeRichEditor() {
     );
 
     return;
-
   }
-
 
   const editorElement =
     $("postContentEditor");
@@ -291,64 +287,63 @@ function initializeRichEditor() {
     return;
   }
 
+  quillEditor = new window.Quill(
+    editorElement,
+    {
+      theme: "snow",
 
-  quillEditor =
-    new window.Quill(
-      editorElement,
-      {
-        theme: "snow",
+      placeholder:
+        "Write your article here...",
 
-        placeholder:
-          "Write your article here...",
+      modules: {
 
-        modules: {
+        toolbar: {
+          container: "#editorToolbar",
 
-          toolbar: [
-            [
-              {
-                header: [2, 3, false]
+          handlers: {
+
+            link: function(value) {
+
+              if (!value) {
+                this.quill.format(
+                  "link",
+                  false
+                );
+                return;
               }
-            ],
 
-            [
-              "bold",
-              "italic",
-              "underline",
-              "strike"
-            ],
+              const range =
+                this.quill.getSelection();
 
-            [
-              {
-                list: "ordered"
-              },
-              {
-                list: "bullet"
+              if (!range) {
+                return;
               }
-            ],
 
-            [
-              "blockquote"
-            ],
+              const url =
+                window.prompt(
+                  "Enter the URL:",
+                  "https://"
+                );
 
-            [
-              "link"
-            ],
+              if (url) {
 
-            [
-              {
-                align: []
+                this.quill.format(
+                  "link",
+                  url
+                );
+
               }
-            ],
 
-            [
-              "clean"
-            ]
-          ]
+            }
+
+          }
 
         }
 
       }
-    );
+
+    }
+  );
 
 
   quillEditor.on(
