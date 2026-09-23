@@ -956,3 +956,80 @@ textarea::placeholder {
   }
 
 }
+/* =========================================================
+   QUILL RICH TEXT EDITOR
+========================================================= */
+
+.rich-text-editor {
+  margin-top: 8px;
+}
+
+.rich-text-editor .ql-toolbar {
+  border: 1px solid var(--line);
+  border-radius: 10px 10px 0 0;
+  background: #f8fbff;
+}
+
+.rich-text-editor .ql-container {
+  min-height: 360px;
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  background: #ffffff;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 15px;
+}
+
+.rich-text-editor .ql-editor {
+  min-height: 360px;
+  padding: 18px;
+  color: var(--ink);
+  line-height: 1.7;
+}
+
+.rich-text-editor .ql-editor h2 {
+  margin: 18px 0 10px;
+  color: var(--navy);
+  font-size: 26px;
+}
+
+.rich-text-editor .ql-editor h3 {
+  margin: 16px 0 8px;
+  color: var(--navy);
+  font-size: 21px;
+}
+
+.rich-text-editor .ql-editor p {
+  margin: 0 0 12px;
+}
+
+.rich-text-editor .ql-editor blockquote {
+  margin: 16px 0;
+  padding: 10px 16px;
+  border-left: 4px solid var(--blue);
+  background: #f5f8fc;
+  color: var(--muted);
+}
+
+.rich-text-editor .ql-editor a {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+.rich-text-editor .ql-editor ul,
+.rich-text-editor .ql-editor ol {
+  margin-bottom: 14px;
+}
+
+.rich-text-editor .ql-editor:focus {
+  outline: none;
+}
+
+@media (max-width: 700px) {
+
+  .rich-text-editor .ql-container,
+  .rich-text-editor .ql-editor {
+    min-height: 280px;
+  }
+
+}
