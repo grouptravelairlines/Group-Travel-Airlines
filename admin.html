@@ -1,24 +1,48 @@
 <!doctype html>
 <html lang="en">
+
 <head>
+
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
 
   <title>Group Travel Airlines — Admin</title>
 
-  <link rel="stylesheet" href="/admin.css">
+  <link
+    rel="stylesheet"
+    href="/admin.css"
+  >
+
+  <!-- Quill Rich Text Editor -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
+    rel="stylesheet"
+  >
+
 </head>
+
 
 <body>
 
-  <div id="setupNotice" class="notice hidden"></div>
+
+  <div
+    id="setupNotice"
+    class="notice hidden"
+  ></div>
 
 
   <!-- =========================================================
        LOGIN
   ========================================================== -->
 
-  <section id="loginView" class="auth-shell">
+  <section
+    id="loginView"
+    class="auth-shell"
+  >
 
     <div class="auth-card">
 
@@ -28,9 +52,13 @@
         class="auth-logo"
       >
 
-      <p class="eyebrow">CONTENT MANAGEMENT</p>
+      <p class="eyebrow">
+        CONTENT MANAGEMENT
+      </p>
 
-      <h1>Admin Login</h1>
+      <h1>
+        Admin Login
+      </h1>
 
       <p class="muted">
         Sign in to manage your Group Travel Airlines content.
@@ -41,23 +69,27 @@
 
         <label>
           Email
+
           <input
             id="loginEmail"
             type="email"
             autocomplete="username"
             required
           >
+
         </label>
 
 
         <label>
           Password
+
           <input
             id="loginPassword"
             type="password"
             autocomplete="current-password"
             required
           >
+
         </label>
 
 
@@ -80,7 +112,10 @@
       </button>
 
 
-      <p id="loginMessage" class="message"></p>
+      <p
+        id="loginMessage"
+        class="message"
+      ></p>
 
     </div>
 
@@ -89,10 +124,13 @@
 
 
   <!-- =========================================================
-       ADMIN
+       ADMIN AREA
   ========================================================== -->
 
-  <section id="adminView" class="admin-shell hidden">
+  <section
+    id="adminView"
+    class="admin-shell hidden"
+  >
 
 
     <!-- TOP BAR -->
@@ -140,7 +178,7 @@
 
 
 
-    <!-- MAIN ADMIN LAYOUT -->
+    <!-- ADMIN LAYOUT -->
 
     <div class="admin-layout">
 
@@ -188,7 +226,7 @@
 
 
 
-      <!-- CONTENT -->
+      <!-- MAIN -->
 
       <main class="admin-main">
 
@@ -365,12 +403,13 @@
 
 
 
-            <!-- EDITOR -->
+            <!-- BLOG EDITOR -->
 
             <div class="post-editor-card card">
 
 
               <form id="postForm">
+
 
                 <input
                   id="postId"
@@ -406,7 +445,9 @@
 
 
 
-                <!-- TITLE -->
+                <!-- =================================================
+                     ARTICLE TITLE
+                ================================================== -->
 
                 <div class="form-section">
 
@@ -426,7 +467,9 @@
 
 
 
-                <!-- SEO BASICS -->
+                <!-- =================================================
+                     SEO
+                ================================================== -->
 
                 <div class="form-section">
 
@@ -439,7 +482,7 @@
                       </h3>
 
                       <p class="muted small-text">
-                        Set the main search information for this article.
+                        Enter the main search information for this article.
                       </p>
 
                     </div>
@@ -502,52 +545,68 @@
 
 
 
-                <!-- ARTICLE EXCERPT -->
+                <!-- =================================================
+                     ARTICLE CONTENT
+                ================================================== -->
 
                 <div class="form-section">
 
-                  <label>
-                    Excerpt
+                  <div class="section-label-row">
 
-                    <textarea
-                      id="postExcerpt"
-                      rows="4"
-                      placeholder="Short introduction that will appear on blog cards..."
-                      required
-                    ></textarea>
+                    <div>
 
-                  </label>
+                      <h3>
+                        Article Content
+                      </h3>
 
-                </div>
+                      <p class="muted small-text">
+                        Format the article using headings, bold text, lists, links and more.
+                      </p>
+
+                    </div>
+
+                  </div>
 
 
+                  <!-- QUILL EDITOR -->
 
-                <!-- ARTICLE CONTENT -->
+                  <div
+                    id="postContentEditor"
+                    class="rich-text-editor"
+                  ></div>
 
-                <div class="form-section">
 
-                  <label>
+                  <!-- Hidden compatibility field.
+                       admin.js will keep this synchronized. -->
 
-                    Article Content
+                  <textarea
+                    id="postContent"
+                    class="hidden"
+                    aria-hidden="true"
+                  ></textarea>
 
-                    <textarea
-                      id="postContent"
-                      rows="18"
-                      placeholder="Write the complete article here..."
-                    ></textarea>
 
-                  </label>
+                  <!-- Hidden excerpt.
+                       admin.js will automatically generate this
+                       from the article content. -->
+
+                  <input
+                    id="postExcerpt"
+                    type="hidden"
+                  >
 
 
                   <p class="field-note">
-                    You can write normal article text here. The saved content will be displayed on the article page.
+                    Use H2 and H3 for article subheadings. Your article title remains the main page heading.
                   </p>
 
                 </div>
 
 
 
-                <!-- FEATURED IMAGE -->
+                <!-- =================================================
+                     FEATURED IMAGE
+                ================================================== -->
 
                 <div class="form-section">
 
@@ -560,7 +619,7 @@
                       </h3>
 
                       <p class="muted small-text">
-                        Upload an image or paste an image URL.
+                        Upload the main image that will appear with this article.
                       </p>
 
                     </div>
@@ -602,6 +661,7 @@
 
                     <div class="featured-controls">
 
+
                       <input
                         id="postImageFile"
                         type="file"
@@ -641,6 +701,21 @@
                       </button>
 
 
+                      <!-- ALT TAG -->
+
+                      <label>
+
+                        Image Alt Tag
+
+                        <input
+                          id="postImageAlt"
+                          type="text"
+                          placeholder="Describe the image for accessibility and SEO..."
+                        >
+
+                      </label>
+
+
                       <button
                         id="removeImageButton"
                         class="danger-button hidden"
@@ -663,7 +738,9 @@
 
 
 
-                <!-- PUBLISH -->
+                <!-- =================================================
+                     PUBLISHING
+                ================================================== -->
 
                 <div class="publish-section">
 
@@ -730,6 +807,7 @@
                   class="message"
                 ></p>
 
+
               </form>
 
             </div>
@@ -780,13 +858,19 @@
 
               <label>
                 Eyebrow
-                <input id="homeEyebrow" type="text">
+                <input
+                  id="homeEyebrow"
+                  type="text"
+                >
               </label>
 
 
               <label>
                 Hero Note
-                <input id="homeHeroNote" type="text">
+                <input
+                  id="homeHeroNote"
+                  type="text"
+                >
               </label>
 
             </div>
@@ -796,13 +880,19 @@
 
               <label>
                 Headline — line 1
-                <input id="homeTitle1" type="text">
+                <input
+                  id="homeTitle1"
+                  type="text"
+                >
               </label>
 
 
               <label>
                 Headline — line 2
-                <input id="homeTitle2" type="text">
+                <input
+                  id="homeTitle2"
+                  type="text"
+                >
               </label>
 
             </div>
@@ -838,25 +928,30 @@
 
               <label>
                 Eyebrow
+
                 <input
                   id="homeContentEyebrow"
                   type="text"
                 >
+
               </label>
 
 
               <label>
                 Heading
+
                 <input
                   id="homeContentTitle"
                   type="text"
                 >
+
               </label>
 
             </div>
 
 
             <label>
+
               Description
 
               <textarea
@@ -887,7 +982,7 @@
 
 
         <!-- =====================================================
-             SETTINGS
+             SITE SETTINGS
         ====================================================== -->
 
         <section
@@ -921,19 +1016,23 @@
 
               <label>
                 Phone
+
                 <input
                   id="settingPhone"
                   type="text"
                 >
+
               </label>
 
 
               <label>
                 Email
+
                 <input
                   id="settingEmail"
                   type="email"
                 >
+
               </label>
 
             </div>
@@ -989,6 +1088,7 @@
 
         </section>
 
+
       </main>
 
     </div>
@@ -996,10 +1096,19 @@
   </section>
 
 
+  <!-- Quill library must load before admin.js -->
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"
+  ></script>
+
+
   <script
     type="module"
     src="/admin.js"
   ></script>
 
+
 </body>
+
 </html>
