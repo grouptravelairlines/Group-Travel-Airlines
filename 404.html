@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Group Travel Airlines</title>
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="/assets/favicon.png"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/styles.css"
+  >
+</head>
+
+<body>
+
+  <header class="site-header">
+    <div class="container nav-inner">
+
+      <a
+        class="brand"
+        href="/"
+        aria-label="Group Travel Airlines Home"
+      >
+        <img
+          src="/assets/logo.png"
+          alt="Group Travel Airlines"
+        >
+      </a>
+
+      <nav class="main-nav" aria-label="Main navigation">
+
+        <a href="/">
+          Home
+        </a>
+
+        <a
+          class="active"
+          href="/blog/"
+        >
+          Blog
+        </a>
+
+      </nav>
+
+    </div>
+  </header>
+
+
+  <main class="post-wrap">
+
+    <div
+      class="container post-shell"
+      id="articleApp"
+    >
+      <div class="empty-post">
+        Loading article...
+      </div>
+    </div>
+
+  </main>
+
+
+  <footer class="site-footer">
+
+    <div class="container footer-grid">
+
+      <div class="footer-brand">
+        <img
+          src="/assets/logo.png"
+          alt="Group Travel Airlines"
+        >
+
+        <p>
+          Practical travel information for groups,
+          families, teams and business travelers.
+        </p>
+      </div>
+
+
+      <div>
+        <h3>Quick Links</h3>
+
+        <a href="/">
+          Home
+        </a>
+
+        <a href="/blog/">
+          Blog
+        </a>
+      </div>
+
+
+      <div>
+        <h3>Contact Us</h3>
+
+        <a href="tel:18889287796">
+          1-888-928-7796
+        </a>
+
+        <a href="mailto:info@grouptravelairlines.com">
+          info@grouptravelairlines.com
+        </a>
+      </div>
+
+    </div>
+
+  </footer>
+
+
+  <script type="module">
+
+    import {
+      getPostBySlug
+    } from "/firebase-public.js";
+
+
+    const app =
+      document.querySelector("#articleApp");
+
+
+    function esc(value) {
+
+      return String(value || "")
+        .replace(
+          /[&<>"']/g,
+          character => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+          }[character])
+        );
+
+    }
+
+
+    function getSlugFromPath() {
+
+      const path =
+        window.location.pathname
+          .replace(/^\/+|\/+$/g, "");
+
+      const parts =
+        path.split("/");
+
+      /*
+        Expected:
+
+        blog/example-slug
+
+        therefore:
+
+        parts[0] = blog
+        parts[1] = example-slug
+      */
+
+      if (
+        parts.length >= 2 &&
+        parts[0] === "blog"
+      ) {
+
+        return decodeURIComponent(
+          parts[1]
+        );
+
+      }
+
+      return "";
+
+    }
+
+
+    async function loadArticle() {
+
+      const slug =
+        getSlugFromPath();
+
+
+      if (!slug) {
+
+        app.innerHTML = `
+          <div class="empty-post">
+            <h1>Page not found</h1>
+
+            <p>
+              Return to the
+              <a href="/blog/">Blog</a>.
+            </p>
+          </div>
+        `;
+
+        return;
+
+      }
+
+
+      try {
+
+        const post =
+          await getPostBySlug(slug);
+
+
+        if (!post) {
+
+          app.innerHTML = `
+            <div class="empty-post">
+              <h1>Article not found</h1>
+
+              <p>
+                Return to the
+                <a href="/blog/">Blog</a>.
+              </p>
+            </div>
+          `;
+
+          return;
+
+        }
+
+
+        app.innerHTML = `
+
+          <p class="post-kicker">
+            ${esc(post.category || "TRAVEL")}
+          </p>
+
+
+          <h1>
+            ${esc(post.title)}
+          </h1>
+
+
+          <div class="post-meta">
+            Group Travel Airlines
+          </div>
+
+
+          ${
+            post.imageUrl
+              ? `
+                <img
+                  class="post-hero"
+                  src="${esc(post.imageUrl)}"
+                  alt="${esc(
+                    post.imageAlt ||
+                    post.title ||
+                    "Group Travel Airlines"
+                  )}"
+                >
+              `
+              : ""
+          }
+
+
+          <div class="post-content">
+            ${String(post.content || "")}
+          </div>
+
+        `;
+
+
+        document.title =
+          post.seoTitle ||
+          post.title ||
+          "Group Travel Airlines";
+
+
+        const meta =
+          document.querySelector(
+            'meta[name="description"]'
+          );
+
+
+        if (meta) {
+
+          meta.setAttribute(
+            "content",
+            post.metaDescription ||
+            post.excerpt ||
+            ""
+          );
+
+        } else {
+
+          const newMeta =
+            document.createElement("meta");
+
+          newMeta.name =
+            "description";
+
+          newMeta.content =
+            post.metaDescription ||
+            post.excerpt ||
+            "";
+
+          document.head.appendChild(
+            newMeta
+          );
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Article loading error:",
+          error
+        );
+
+        app.innerHTML = `
+          <div class="empty-post">
+            <h1>Article unavailable</h1>
+
+            <p>
+              Please try again later.
+            </p>
+          </div>
+        `;
+
+      }
+
+    }
+
+
+    loadArticle();
+
+  </script>
+
+</body>
+</html>
