@@ -537,6 +537,26 @@ textarea::placeholder {
 }
 
 
+/* ADD THESE */
+
+.post-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.post-row-content{
+  min-width:0;
+  flex:1;
+}
+
+.post-delete-button{
+  flex:0 0 auto;
+  padding:8px 12px;
+  font-size:12px;
+}
+
 /* =========================================================
    BLOG EDITOR
 ========================================================= */
