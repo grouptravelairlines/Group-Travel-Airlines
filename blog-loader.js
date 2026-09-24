@@ -16,7 +16,7 @@ try {
           <span class="article-label">${esc(p.category || "TRAVEL")}</span>
           <h2>${esc(p.title)}</h2>
           <p>${esc(p.excerpt || "")}</p>
-          <a href="post.html?slug=${encodeURIComponent(p.slug || "")}">Read article →</a>
+          <a href="/blog/${encodeURIComponent(p.slug || "")}">Read article →</a>
         </div>
       </article>
     `).join("");
