@@ -146,7 +146,7 @@ function renderLatestPosts(posts) {
             ${excerpt}
           </p>
 
-          <a href="post.html?slug=${slug}">
+          <a href="/blog/${slug}">
             Read article →
           </a>
 
