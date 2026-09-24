@@ -44,16 +44,21 @@ const slug=new URLSearchParams(location.search).get("slug");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
 try{
   const post=await getPostBySlug(slug||"");
-  if(!post){ app.innerHTML='<div class="empty-post"><h1>Article not found</h1><p>Return to the <a href="blog.html">Blog</a>.</p></div>'; }
-  else {
-    const content=esc(post.content||"").split(/\n{2,}/).map(p=>`<p>${p.replace(/\n/g,"<br>")}</p>`).join("");
-    app.innerHTML=`
-      <p class="post-kicker">${esc(post.category||"TRAVEL")}</p>
-      <h1>${esc(post.title)}</h1>
-      <div class="post-meta">Group Travel Airlines</div>
-      ${post.imageUrl?`<img class="post-hero" src="${esc(post.imageUrl)}" alt="">`:""}
-      <div class="post-content">${content}</div>
-    `;
+
+if(!post){
+  app.innerHTML='<div class="empty-post"><h1>Article not found</h1><p>Return to the <a href="/blog/">Blog</a></p></div>';
+}
+else{
+
+  const content = String(post.content || "");
+
+  app.innerHTML=`
+    <p class="post-kicker">${esc(post.category||"TRAVEL")}</p>
+    <h1>${esc(post.title)}</h1>
+    <div class="post-meta">Group Travel Airlines</div>
+    ${post.imageUrl ? `<img class="post-hero" src="${esc(post.imageUrl)}" alt="">` : ""}
+    <div class="post-content">${content}</div>
+  `;
     document.title=post.seoTitle || post.title;
     const md=document.querySelector('meta[name="description"]');
     md?.setAttribute("content",post.metaDescription||post.excerpt||"Group Travel Airlines");
