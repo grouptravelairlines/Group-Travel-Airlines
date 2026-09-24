@@ -236,103 +236,97 @@
         ====================================================== -->
 
         <section
-          id="dashboardPanel"
-          class="panel active"
-        >
+  id="dashboardPanel"
+  class="panel active"
+>
 
-          <div class="panel-heading">
+  <div class="dashboard-heading">
 
-            <div>
+    <div>
+      <p class="eyebrow">OVERVIEW</p>
 
-              <p class="eyebrow">
-                OVERVIEW
-              </p>
+      <h2>Content Dashboard</h2>
 
-              <h2>
-                Content Dashboard
-              </h2>
+      <p class="dashboard-subtitle">
+        Manage your travel content and publishing activity.
+      </p>
+    </div>
 
-            </div>
+    <button
+      class="primary dashboard-new-post"
+      type="button"
+      data-open-posts
+    >
+      + New Blog Post
+    </button>
 
-
-            <button
-              class="primary"
-              type="button"
-              data-open-posts
-            >
-              + New Blog Post
-            </button>
-
-          </div>
+  </div>
 
 
-          <div class="stats-grid">
+  <div class="stats-grid dashboard-stats">
 
-            <div class="stat">
+    <div class="stat dashboard-stat">
+      <div class="stat-label">TOTAL POSTS</div>
 
-              <span>
-                Total Posts
-              </span>
+      <strong id="statTotal">0</strong>
 
-              <strong id="statTotal">
-                0
-              </strong>
-
-            </div>
+      <span>All blog content</span>
+    </div>
 
 
-            <div class="stat">
+    <div class="stat dashboard-stat dashboard-stat-published">
+      <div class="stat-label">PUBLISHED</div>
 
-              <span>
-                Published
-              </span>
+      <strong id="statPublished">0</strong>
 
-              <strong id="statPublished">
-                0
-              </strong>
-
-            </div>
+      <span>Visible on the website</span>
+    </div>
 
 
-            <div class="stat">
+    <div class="stat dashboard-stat dashboard-stat-drafts">
+      <div class="stat-label">DRAFTS</div>
 
-              <span>
-                Drafts
-              </span>
+      <strong id="statDrafts">0</strong>
 
-              <strong id="statDrafts">
-                0
-              </strong>
+      <span>Not yet published</span>
+    </div>
 
-            </div>
-
-          </div>
+  </div>
 
 
-          <div class="card">
+  <div class="card dashboard-recent-card">
 
-            <div class="card-heading">
+    <div class="dashboard-card-header">
 
-              <div>
+      <div>
+        <p class="eyebrow">CONTENT ACTIVITY</p>
 
-                <p class="eyebrow">
-                  CONTENT
-                </p>
+        <h3>Recent Posts</h3>
 
-                <h3>
-                  Recent Posts
-                </h3>
+        <p class="dashboard-card-subtitle">
+          Your latest blog content appears here.
+        </p>
+      </div>
 
-              </div>
+      <button
+        class="dashboard-view-posts"
+        type="button"
+        data-open-posts
+      >
+        View all →
+      </button>
 
-            </div>
+    </div>
 
 
-            <div id="recentPosts"></div>
+    <div
+      id="recentPosts"
+      class="dashboard-recent-posts"
+    ></div>
 
-          </div>
+  </div>
 
-        </section>
+</section>
 
 
 
