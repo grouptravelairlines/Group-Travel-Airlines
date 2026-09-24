@@ -13,7 +13,8 @@ import {
   setDoc,
   addDoc,
   updateDoc,
-  serverTimestamp
+deleteDoc,
+serverTimestamp
 } from "./firebase-app.js";
 
 
