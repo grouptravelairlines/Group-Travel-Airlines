@@ -6,6 +6,7 @@
 <meta name="description" content="Group Travel Airlines article">
 <title>Blog Post | Group Travel Airlines</title>
 <link rel="stylesheet" href="styles.css">
+<link id="canonicalLink" rel="canonical" href="https://grouptravelairlines.github.io/blog/">
 <style>
 .post-wrap{padding:70px 0}
 .post-shell{max-width:880px;margin:auto}
@@ -59,9 +60,28 @@ else{
     ${post.imageUrl ? `<img class="post-hero" src="${esc(post.imageUrl)}" alt="">` : ""}
     <div class="post-content">${content}</div>
   `;
-    document.title=post.seoTitle || post.title;
-    const md=document.querySelector('meta[name="description"]');
-    md?.setAttribute("content",post.metaDescription||post.excerpt||"Group Travel Airlines");
+    document.title = post.seoTitle || post.title;
+
+const md =
+  document.querySelector('meta[name="description"]');
+
+md?.setAttribute(
+  "content",
+  post.metaDescription ||
+  post.excerpt ||
+  "Group Travel Airlines"
+);
+
+const canonical =
+  document.querySelector("#canonicalLink");
+
+const articleSlug =
+  post.slug || slug || "";
+
+if (canonical && articleSlug) {
+  canonical.href =
+    `https://grouptravelairlines.github.io/blog/${encodeURIComponent(articleSlug)}`;
+}
   }
 }catch(err){
   app.innerHTML='<div class="empty-post"><h1>Article unavailable</h1><p>Please try again later.</p></div>';
