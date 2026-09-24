@@ -580,59 +580,113 @@ function renderStats() {
    POST LIST
 ========================================================= */
 
-function renderPostList() {
+function renderPostList(){
 
-  $("postList").innerHTML =
-    posts
-      .map(
-        post => `
+  $("postList").innerHTML = posts.map(p=>`
+    <div class="post-row" data-id="${p.id}">
 
-          <div
-            class="post-row"
-            data-id="${post.id}"
-          >
+      <div class="post-row-content">
+        <strong>
+          ${escapeHtml(p.title || "Untitled")}
+        </strong>
 
-            <strong>
-              ${escapeHtml(
-                post.title ||
-                "Untitled"
-              )}
-            </strong>
+        <span>
+          ${escapeHtml(p.category || "Travel")}
+          ·
+          ${p.published ? "Published" : "Draft"}
+        </span>
+      </div>
 
-            <span>
-              Travel Blog
-              ·
-              ${
-                post.published
-                  ? "Published"
-                  : "Draft"
-              }
-            </span>
+      <button
+        type="button"
+        class="danger post-delete-button"
+        data-delete-id="${p.id}"
+      >
+        Delete
+      </button>
 
-          </div>
-
-        `
-      )
-      .join("")
-
-    ||
-
-    '<p class="muted">No posts yet. Click “New Post”.</p>';
+    </div>
+  `).join("") || '<p class="muted">No posts yet. Click “New Post”.</p>';
 
 
   document
-    .querySelectorAll(
-      "#postList .post-row"
-    )
+    .querySelectorAll("#postList .post-row")
     .forEach(row => {
 
       row.addEventListener(
         "click",
         () => {
-
           loadPostIntoEditor(
             row.dataset.id
           );
+        }
+      );
+
+    });
+
+
+  document
+    .querySelectorAll(".post-delete-button")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        async event => {
+
+          event.stopPropagation();
+
+          const postId =
+            button.dataset.deleteId;
+
+          const post =
+            posts.find(
+              p => p.id === postId
+            );
+
+          if (!post) {
+            return;
+          }
+
+          const confirmed =
+            confirm(
+              `Delete "${post.title || "this post"}"?`
+            );
+
+          if (!confirmed) {
+            return;
+          }
+
+          try {
+
+            await deleteDoc(
+              doc(
+                db,
+                "posts",
+                postId
+              )
+            );
+
+            if (currentPostId === postId) {
+              newPost();
+            }
+
+            await loadPosts();
+
+            setMessage(
+              "postMessage",
+              "Post deleted.",
+              true
+            );
+
+          } catch (err) {
+
+            setMessage(
+              "postMessage",
+              err.message ||
+                "Delete failed."
+            );
+
+          }
 
         }
       );
