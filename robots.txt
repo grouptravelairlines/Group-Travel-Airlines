@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /post.html
+
+Sitemap: https://grouptravelairlines.github.io/sitemap.xml
