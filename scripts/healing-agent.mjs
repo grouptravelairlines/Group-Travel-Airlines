@@ -225,6 +225,27 @@ async function writeArticles(posts) {
 
   const active = new Set(posts.map((p) => p.slug));
 
+  // Remove old generated article folders BEFORE creating
+  // the new extensionless article files.
+  for (const entry of await fs.readdir(BLOG_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+
+    const dir = path.join(BLOG_DIR, entry.name);
+    const oldFile = path.join(dir, "index.html");
+
+    try {
+      const html = await fs.readFile(oldFile, "utf8");
+
+      if (html.includes(GENERATED_MARKER)) {
+        await fs.rm(dir, {
+          recursive: true,
+          force: true
+        });
+      }
+    } catch {}
+  }
+
+  // Create extensionless article files.
   for (const post of posts) {
     const file = path.join(BLOG_DIR, post.slug);
 
@@ -235,40 +256,23 @@ async function writeArticles(posts) {
     );
   }
 
+  // Remove old generated extensionless articles
+  // that are no longer published.
   for (const entry of await fs.readdir(BLOG_DIR, { withFileTypes: true })) {
+    if (!entry.isFile()) continue;
 
-    // Remove old generated /blog/slug/index.html folders.
-    if (entry.isDirectory()) {
-      const oldFile = path.join(BLOG_DIR, entry.name, "index.html");
+    const file = path.join(BLOG_DIR, entry.name);
 
-      try {
-        const html = await fs.readFile(oldFile, "utf8");
+    try {
+      const html = await fs.readFile(file, "utf8");
 
-        if (html.includes(GENERATED_MARKER)) {
-          await fs.rm(
-            path.join(BLOG_DIR, entry.name),
-            { recursive: true, force: true }
-          );
-        }
-      } catch {}
-    }
-
-    // Remove old generated extensionless article files
-    // when the Firebase post is no longer published.
-    if (entry.isFile()) {
-      const file = path.join(BLOG_DIR, entry.name);
-
-      try {
-        const html = await fs.readFile(file, "utf8");
-
-        if (
-          html.includes(GENERATED_MARKER) &&
-          !active.has(entry.name)
-        ) {
-          await fs.rm(file, { force: true });
-        }
-      } catch {}
-    }
+      if (
+        html.includes(GENERATED_MARKER) &&
+        !active.has(entry.name)
+      ) {
+        await fs.rm(file, { force: true });
+      }
+    } catch {}
   }
 }
 
