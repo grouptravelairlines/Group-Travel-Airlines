@@ -225,54 +225,37 @@ async function writeArticles(posts) {
 
   const active = new Set(posts.map((p) => p.slug));
 
-  // Remove old generated article folders BEFORE creating
-  // the new extensionless article files.
-  for (const entry of await fs.readdir(BLOG_DIR, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-
-    const dir = path.join(BLOG_DIR, entry.name);
-    const oldFile = path.join(dir, "index.html");
-
-    try {
-      const html = await fs.readFile(oldFile, "utf8");
-
-      if (html.includes(GENERATED_MARKER)) {
-        await fs.rm(dir, {
-          recursive: true,
-          force: true
-        });
-      }
-    } catch {}
-  }
-
-  // Create extensionless article files.
+  // Create one index.html inside each article folder.
   for (const post of posts) {
-    const file = path.join(BLOG_DIR, post.slug);
+    const dir = path.join(BLOG_DIR, post.slug);
+
+    await fs.mkdir(dir, { recursive: true });
 
     await fs.writeFile(
-      file,
+      path.join(dir, "index.html"),
       articleHtml(post, post.slug),
       "utf8"
     );
   }
 
-  // Remove old generated extensionless articles
-  // that are no longer published.
+  // Remove old generated article folders that are no longer published.
   for (const entry of await fs.readdir(BLOG_DIR, { withFileTypes: true })) {
-    if (!entry.isFile()) continue;
+    if (!entry.isDirectory()) continue;
 
-    const file = path.join(BLOG_DIR, entry.name);
+    if (!active.has(entry.name)) {
+      const file = path.join(BLOG_DIR, entry.name, "index.html");
 
-    try {
-      const html = await fs.readFile(file, "utf8");
+      try {
+        const html = await fs.readFile(file, "utf8");
 
-      if (
-        html.includes(GENERATED_MARKER) &&
-        !active.has(entry.name)
-      ) {
-        await fs.rm(file, { force: true });
-      }
-    } catch {}
+        if (html.includes(GENERATED_MARKER)) {
+          await fs.rm(
+            path.join(BLOG_DIR, entry.name),
+            { recursive: true, force: true }
+          );
+        }
+      } catch {}
+    }
   }
 }
 
