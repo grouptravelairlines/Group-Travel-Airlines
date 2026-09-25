@@ -153,7 +153,10 @@ function articleHtml(post, slug) {
     dateModified: modified || undefined,
   };
 
-  return `<!doctype html>
+  return `---
+permalink: /blog/${slug}
+---
+<!doctype html>
 <html lang="en">
 <head>
 ${GENERATED_MARKER}
@@ -223,36 +226,73 @@ async function writeSitemap(posts) {
 async function writeArticles(posts) {
   await fs.mkdir(BLOG_DIR, { recursive: true });
 
-  const active = new Set(posts.map((p) => p.slug));
+  const activeFiles = new Set(
+    posts.map((post) => `${post.slug}.html`)
+  );
 
-  // Create one index.html inside each article folder.
+  // Remove old generated article folders.
+  // These created the unwanted trailing-slash URLs.
+  for (const entry of await fs.readdir(BLOG_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+
+    const oldFile = path.join(
+      BLOG_DIR,
+      entry.name,
+      "index.html"
+    );
+
+    try {
+      const html = await fs.readFile(oldFile, "utf8");
+
+      if (html.includes(GENERATED_MARKER)) {
+        await fs.rm(
+          path.join(BLOG_DIR, entry.name),
+          {
+            recursive: true,
+            force: true
+          }
+        );
+      }
+    } catch {}
+  }
+
+  // Create Jekyll source files.
+  // Example:
+  // blog/how-to-book-an-air-transat-group-flight.html
   for (const post of posts) {
-    const dir = path.join(BLOG_DIR, post.slug);
-
-    await fs.mkdir(dir, { recursive: true });
+    const file = path.join(
+      BLOG_DIR,
+      `${post.slug}.html`
+    );
 
     await fs.writeFile(
-      path.join(dir, "index.html"),
+      file,
       articleHtml(post, post.slug),
       "utf8"
     );
   }
 
-  // Remove old generated article folders that are no longer published.
+  // Remove old generated flat article files
+  // that are no longer published.
   for (const entry of await fs.readdir(BLOG_DIR, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
+    if (!entry.isFile()) continue;
 
-    if (!active.has(entry.name)) {
-      const file = path.join(BLOG_DIR, entry.name, "index.html");
+    // Never remove the main Blog page.
+    if (entry.name === "index.html") continue;
+
+    if (!activeFiles.has(entry.name)) {
+      const file = path.join(
+        BLOG_DIR,
+        entry.name
+      );
 
       try {
         const html = await fs.readFile(file, "utf8");
 
         if (html.includes(GENERATED_MARKER)) {
-          await fs.rm(
-            path.join(BLOG_DIR, entry.name),
-            { recursive: true, force: true }
-          );
+          await fs.rm(file, {
+            force: true
+          });
         }
       } catch {}
     }
